@@ -178,11 +178,11 @@ async function queryLLMWithFallback(systemPrompt, history, userMessage, toolResp
 }
 
 // --- QWEN IMAGE AI (ALIBABA DASHSCOPE) ---
-async function generateQwenImage(prompt) {
+async function generateQwenImage(prompt, customRefImage = null) {
     const apiKey = process.env.QWEN_API_KEY || 'sk-ws-H.ILHDHP.fakn.MEYCIQDGQZgkorFTHh9mN1IlzQTeZ8zRIs6mpfQd9UiznuGVOgIhAKIPOHid-8zDdxd5uk0Fpz70IajHWahhfqgiFvq6NL1m';
     const host = 'https://ws-9eq65lbzoayak8np.ap-southeast-1.maas.aliyuncs.com';
     const endpoint = `${host}/api/v1/services/aigc/multimodal-generation/generation`;
-    const refImageUrl = 'https://fatsproxyai.vercel.app/airish.jpg';
+    const refImageUrl = customRefImage || 'https://airish-chatbot-5p18.vercel.app/airish.jpg';
 
     const response = await fetch(endpoint, {
         method: "POST",
@@ -348,7 +348,7 @@ async function processMessage(body) {
             await logEvent('INFO', 'AI Tool Triggered', `Memanggil Tool: ${callName}`, userId);
             
             const context = { chatId, userId, history: history || [], systemPrompt, text, toolCall, message };
-            const services = { sendTelegram, sendTelegramPhotoBuffer, generateQwenImage, logEvent, supabase, queryLLMWithFallback };
+            const services = { sendTelegram, sendTelegramPhotoBuffer, generateQwenImage: (p) => generateQwenImage(p, refImage), logEvent, supabase, queryLLMWithFallback };
             
             await executeTool(callName, args, context, services);
         } else {
