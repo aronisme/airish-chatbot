@@ -249,7 +249,7 @@ async function processMessage(body) {
         const newState = calculateSoulState(currentState, perception);
         
         // Menghitung Desire (Motivasi Intrinsik)
-        newState.desires = calculateDesires(currentState.desires || {}, perception, text.length);
+        newState.desires = calculateDesires(currentState.desires || {}, perception, text.length, persona);
         await saveSoulState(userId, newState);
         
         // Mengambil Embodiment State hasil dari Chronos (Background Job)
