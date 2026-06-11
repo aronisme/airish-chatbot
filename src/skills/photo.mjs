@@ -48,16 +48,16 @@ export async function executePhotoTool(args, context, services) {
                 description = await analyzeImage(base64Image);
             }
             
-            // Simpan ke Working Memory dengan format first-person + catatan visual agar AI tidak salah paham
-            const memoryText = `Ini fotoku yang baru saja aku kirimkan untukmu! [Catatan visual foto: Di foto ini aku terlihat ${description}]`;
-            await saveWorkingMemory(userId, 'assistant', memoryText);
+            // Fix 5: Simpan marker minimal — JANGAN simpan deskripsi visual AI ke WM
+            // karena Reflection Engine akan salah mengekstrak sebagai fakta user
+            await saveWorkingMemory(userId, 'assistant', '[SYSTEM: Airish mengirim foto selfie ke user]');
         } else {
             await sendTelegram('sendMessage', { chat_id: chatId, text: "Aduh, koneksi ke Telegram putus saat mengirim foto." });
-            await saveWorkingMemory(userId, 'assistant', "[Aku sudah mencoba mengirim foto tapi gagal karena koneksi putus. Jangan coba kirim foto lagi kecuali diminta.]");
+            await saveWorkingMemory(userId, 'assistant', '[SYSTEM: Gagal mengirim foto]');
         }
     } catch (error) {
         await logEvent('ERROR', 'Generate Selfie Error', error.message, userId);
         await sendTelegram('sendMessage', { chat_id: chatId, text: "Aduh, kamera aku lagi error nih." });
-        await saveWorkingMemory(userId, 'assistant', "[Aku sudah mencoba mengirim foto tapi kamera/AI gambar sedang error. Jangan coba kirim foto lagi kecuali user meminta ulang.]");
+        await saveWorkingMemory(userId, 'assistant', '[SYSTEM: Gagal mengirim foto - error kamera]');
     }
 }

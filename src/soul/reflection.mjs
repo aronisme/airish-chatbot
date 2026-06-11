@@ -7,24 +7,41 @@ function getRandomGroqKey() {
     return groqKeys[Math.floor(Math.random() * groqKeys.length)];
 }
 
-const REFLECTION_PROMPT = `Kamu adalah mesin introspeksi psikologis. 
-Tugasmu menganalisis transkrip percakapan antara 'user' (manusia) dan 'assistant' (bot/AI).
-Tugas utamamu HANYA mengekstrak fakta penting baru atau kejadian spesifik TENTANG USER.
+// --- DAFTAR KATA KUNCI PENANDA FAKTA AI (Safety Net) ---
+const AI_FACT_MARKERS = [
+    'kos', 'piyama', 'rebahan', 'kamar kos', 'kampus', 'scrolling',
+    'outfit', 'pakaian', 'tetangga kos', 'inner thought', 'pikiran batin',
+    'lagi tidur', 'baru bangun', 'ngantuk banget', 'kamar aku', 'tiktok',
+    'kamar sendiri', 'kasur', 'selimut', 'bantal', 'kaos oblong',
+    'hoodie', 'celana pendek', 'sandal', 'kosan', 'anak kos'
+];
 
-ATURAN KRITIS (BACA BAIK-BAIK):
-1. 'user' adalah manusia (pengguna). 'assistant' adalah dirimu sendiri (bot/AI).
-2. DILARANG KERAS mengekstrak fakta, cerita, pikiran batin, atau pakaian yang dipakai oleh 'assistant'. Fakta seperti "tinggal di kos", "pakai piyama", "takut tetangga kos" adalah milik 'assistant'. JANGAN mencatatnya sebagai memori user!
-3. HANYA ekstrak fakta yang benar-benar diceritakan oleh 'user' TENTANG DIRINYA SENDIRI. Jika bingung apakah itu tentang user atau assistant, JANGAN ekstrak.
+function isLikelyAIFact(factText) {
+    const lower = factText.toLowerCase();
+    return AI_FACT_MARKERS.some(marker => lower.includes(marker));
+}
+
+const REFLECTION_PROMPT = `Kamu adalah mesin introspeksi psikologis.
+Tugasmu menganalisis transkrip percakapan dan mengekstrak HANYA fakta yang memenuhi SEMUA kriteria berikut:
+1. Fakta tersebut DICERITAKAN/DIKETIK oleh entitas berlabel [PENGGUNA/MANUSIA]
+2. Fakta tersebut adalah tentang KEHIDUPAN PRIBADI pengguna manusia itu sendiri
+3. Fakta tersebut BUKAN tentang: lokasi kos bot, outfit bot, rebahan bot, kampus bot, aktivitas fisik bot, atau perasaan bot
+
+CARA KERJA:
+- HANYA baca pesan berlabel [PENGGUNA/MANUSIA]
+- ABAIKAN SEPENUHNYA semua pesan berlabel [BOT/AI - ABAIKAN]
+- Jika ragu apakah fakta milik pengguna atau bot, JANGAN EKSTRAK
+- JANGAN PERNAH mengekstrak deskripsi pakaian, lokasi, aktivitas, atau pikiran batin dari pesan bot
 
 Output harus format JSON murni:
 {
-  "new_facts": ["fakta 1", "fakta 2"], // Fakta STATIS/PERMANEN (contoh: Punya anjing bernama Budi, Punya motor). JANGAN masukkan masalah sementara.
+  "new_facts": ["fakta 1", "fakta 2"],
   "new_events": [
-     {"event": "User sedang kesal karena ban motornya bocor hari ini", "emotion": "sad"} // Kejadian DINAMIS/SEMENTARA atau insiden spesifik.
+     {"event": "Pengguna sedang kesal karena ban motornya bocor hari ini", "emotion": "sad"}
   ],
-  "obsolete_fact_ids": [15, 23] // Jika ada [ID] fakta di daftar sebelumnya yang sudah TIDAK BENAR/KADALUARSA (misal: "Ban bocor" padahal user bilang sudah diperbaiki).
+  "obsolete_fact_ids": [15, 23]
 }
-Jika tidak ada informasi yang penting untuk diingat tentang USER, kembalikan array kosong []. Jangan berikan markdown block.`;
+Jika tidak ada informasi baru tentang PENGGUNA, kembalikan {"new_facts":[],"new_events":[],"obsolete_fact_ids":[]}. Jangan berikan markdown block.`;
 
 /**
  * Reflection Engine (Berjalan di background via waitUntil)
@@ -42,8 +59,27 @@ export async function runReflectionEngine(supabase, userId, workingMemory) {
             : "Belum ada fakta yang tersimpan.";
 
         // Ambil 5 pesan terakhir untuk direnungkan
-        const recentChats = workingMemory.slice(-5);
-        const conversationString = recentChats.map(m => `${m.role}: ${m.content}`).join('\n');
+        // Fix 2: Filter konten assistant — strip catatan visual/embodiment yang hanya menjadi noise
+        const recentChats = workingMemory.slice(-5).map(m => {
+            if (m.role === 'assistant' || m.role !== 'user') {
+                let cleanContent = (m.content || '')
+                    .replace(/\[Catatan visual.*?\]/gs, '[foto dikirim]')
+                    .replace(/\[SYSTEM:.*?\]/gs, '')
+                    .replace(/\[.*?sedang.*?di.*?\]/gs, '')
+                    .trim();
+                return { ...m, content: cleanContent };
+            }
+            return m;
+        });
+
+        // Fix 1: Format conversation dengan label eksplisit agar LLM kecil tidak bingung
+        const conversationString = recentChats.map(m => {
+            if (m.role === 'user') {
+                return `[PENGGUNA/MANUSIA]: ${m.content}`;
+            } else {
+                return `[BOT/AI - ABAIKAN]: ${m.content}`;
+            }
+        }).join('\n\n---\n\n');
         
         const dynamicPrompt = `${REFLECTION_PROMPT}
         
@@ -78,16 +114,26 @@ ATURAN KRITIS: JANGAN PERNAH memasukkan ulang fakta yang maknanya sama persis at
         const content = JSON.parse(data.choices[0].message.content);
         
         // 1. Simpan fakta ke Semantic Memory (tabel lama)
+        // Fix 4: Pre-validation — blokir fakta yang kemungkinan milik AI
         if (content.new_facts && content.new_facts.length > 0) {
             for (const fact of content.new_facts) {
-                await supabase.from('memories').insert({ telegram_id: userId, fact: fact });
+                if (isLikelyAIFact(fact)) {
+                    console.warn(`[REFLECTION] BLOCKED AI fact: "${fact}"`);
+                } else {
+                    await supabase.from('memories').insert({ telegram_id: userId, fact: fact });
+                }
             }
         }
         
         // 2. Simpan kejadian ke Episodic Memory (tabel pgvector baru)
+        // Fix 4: Pre-validation juga untuk episodic events
         if (content.new_events && content.new_events.length > 0) {
             for (const ev of content.new_events) {
-                await saveEpisodicMemory(supabase, userId, ev.event, ev.emotion);
+                if (isLikelyAIFact(ev.event)) {
+                    console.warn(`[REFLECTION] BLOCKED AI event: "${ev.event}"`);
+                } else {
+                    await saveEpisodicMemory(supabase, userId, ev.event, ev.emotion);
+                }
             }
         }
 
