@@ -96,8 +96,15 @@ export async function queryLLMWithFallback(systemPrompt, history = [], userMessa
 }
 
 // --- GROQ (Qwen3-32B) untuk tugas background ringan (Chronos) ---
+const groqKeys = (process.env.GROQ_KEYS || "").split(',').map(k => k.trim()).filter(Boolean);
+
+function getRandomGroqKey() {
+    if (groqKeys.length === 0) return "";
+    return groqKeys[Math.floor(Math.random() * groqKeys.length)];
+}
+
 export async function queryGroq(systemPrompt, userMessage = "", jsonMode = false) {
-    const apiKey = process.env.GROQ_API_KEY || "";
+    const apiKey = getRandomGroqKey();
     const url = "https://api.groq.com/openai/v1/chat/completions";
 
     const messages = [
