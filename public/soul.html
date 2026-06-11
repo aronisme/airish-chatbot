@@ -470,7 +470,16 @@
                 // Agenda
                 if(data.agenda) {
                     document.getElementById('live-agenda-date').innerText = data.agenda.date || '-';
-                    document.getElementById('live-agenda').innerText = data.agenda.agenda || '-';
+                    
+                    let agText = data.agenda.agenda;
+                    if (Array.isArray(agText)) {
+                        agText = agText.map(a => typeof a === 'object' ? Object.values(a).join(' - ') : a).join('\n');
+                    } else if (typeof agText === 'object') {
+                        agText = JSON.stringify(agText);
+                    }
+                    
+                    document.getElementById('live-agenda').innerText = agText || '-';
+                    document.getElementById('live-agenda').style.whiteSpace = 'pre-wrap';
                 }
 
                 // Cuaca mentah
