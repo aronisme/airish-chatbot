@@ -7,11 +7,10 @@ async function handler(event) {
     }
 
     // Ambil semua data soul dari Redis secara paralel
-    const [embodimentStr, agendaStr, weatherStr, settingsStr] = await Promise.all([
+    const [embodimentStr, agendaStr, weatherStr] = await Promise.all([
         redis.get('soul:embodiment:global'),
         redis.get('soul:chronos:agenda'),
-        redis.get('soul:chronos:weather'),
-        redis.get('soul:settings:global'),
+        redis.get('soul:chronos:weather')
     ]);
 
     const parse = (str) => {
@@ -23,7 +22,6 @@ async function handler(event) {
     const embodiment = parse(embodimentStr);
     const agenda = parse(agendaStr);
     const weather = typeof weatherStr === 'string' ? weatherStr : null;
-    const settings = parse(settingsStr);
 
     // Cari semua user soul_state (ambil max 10 user)
     // Karena Upstash tidak support SCAN dengan mudah, kita ambil dari Supabase users
@@ -62,7 +60,6 @@ async function handler(event) {
         embodiment,
         agenda,
         weather,
-        settings,
         userStates
     });
 }

@@ -31,8 +31,14 @@ async function handler(event) {
     }
 
     // Cek setting untuk timezone / base city
-    const settingsStr = await redis.get('soul:settings:global');
-    const settings = settingsStr ? (typeof settingsStr === 'string' ? JSON.parse(settingsStr) : settingsStr) : { proactive: true, homeCity: "Jakarta" };
+    const { data: persona } = await supabase.from('personas').select('*').limit(1).single();
+    const settings = persona ? {
+        proactive: persona.proactive ?? true,
+        homeCity: persona.home_city || "Jakarta",
+        personaName: persona.name || "Airish",
+        personaArchetype: persona.archetype || "Gadis ceria",
+        personaCraft: persona.craft || "Mahasiswi"
+    } : { proactive: true, homeCity: "Jakarta" };
 
     const hour = now.toLocaleString("en-US", { timeZone: "Asia/Jakarta", hour: "numeric", hour12: false });
     const currentHour = parseInt(hour, 10);

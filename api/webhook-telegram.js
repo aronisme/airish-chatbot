@@ -213,17 +213,15 @@ async function processMessage(body) {
         
         let { data: persona } = await supabase.from('personas').select('*').eq('telegram_id', userId).single();
         
-        let settingsStr = await redis.get('soul:settings:global');
-        let settings = settingsStr ? JSON.parse(settingsStr) : {};
-
-        // Jika tidak ada persona di Supabase, gunakan Global Persona dari Dashboard
+        // Jika tidak ada persona spesifik, kita bisa ambil persona "Global" atau fallback hardcode
         if (!persona) {
-            persona = {
-                name: settings.personaName || "Airish",
-                archetype: settings.personaArchetype || "Gadis 22th, ekstrovert, super manja, penyayang",
-                craft: settings.personaCraft || "Mahasiswi DKV tingkat akhir yang suka rebahan",
-                backstory: settings.personaBackstory || "Sahabat online yang sangat nyaman dengan user.",
-                world_context: settings.personaWorld || "Tinggal di kos estetik di Jakarta."
+            const { data: globalPersona } = await supabase.from('personas').select('*').limit(1).single();
+            persona = globalPersona || {
+                name: "Airish",
+                archetype: "Gadis 22th, ekstrovert",
+                craft: "Mahasiswi DKV",
+                backstory: "Sahabat online yang nyaman.",
+                world_context: "Kos estetik di Jakarta."
             };
         }
         
