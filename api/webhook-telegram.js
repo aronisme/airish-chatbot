@@ -147,7 +147,7 @@ async function queryQwen(systemPrompt, history, userMessage, toolResponseMessage
     }
 
     const body = {
-        model: "qwen-plus",
+        model: "qwen-flash",
         messages,
     };
     if (!toolResponseMessages) {
