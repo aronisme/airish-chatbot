@@ -22,11 +22,11 @@ export async function executeTool(callName, args, context, services) {
     }
 
     if (callName === 'set_goal') {
-        return await executeSetGoalTool(args, context);
+        return await executeSetGoalTool(args, context, services);
     }
 
     if (callName === 'complete_goal') {
-        return await executeCompleteGoalTool(args, context);
+        return await executeCompleteGoalTool(args, context, services);
     }
     
     return null;
