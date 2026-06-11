@@ -80,9 +80,16 @@ Kembalikan HANYA dalam format JSON dengan key: "agenda" (string singkat) dan "ou
         try {
             const llmRes = await queryChronosLLM(prompt, "", true);
             const resJson = JSON.parse(llmRes.choices[0].message.content);
+            let agendaText = resJson.agenda || "Sibuk nugas";
+            if (Array.isArray(agendaText)) {
+                agendaText = agendaText.map(item => typeof item === 'object' ? Object.values(item).join(' - ') : item).join(', ');
+            } else if (typeof agendaText === 'object') {
+                agendaText = JSON.stringify(agendaText);
+            }
+
             agenda = {
                 date: dateStr,
-                agenda: resJson.agenda || "Sibuk nugas",
+                agenda: agendaText,
                 outfit: resJson.outfit || "Kaos oblong"
             };
             await redis.set('soul:chronos:agenda', JSON.stringify(agenda));
