@@ -94,3 +94,47 @@ export async function queryLLMWithFallback(systemPrompt, history = [], userMessa
         return await queryQwen(systemPrompt, history, userMessage, toolResponseMessages, jsonMode);
     }
 }
+
+// --- GROQ (Qwen3-32B) untuk tugas background ringan (Chronos) ---
+export async function queryGroq(systemPrompt, userMessage = "", jsonMode = false) {
+    const apiKey = process.env.GROQ_API_KEY || "";
+    const url = "https://api.groq.com/openai/v1/chat/completions";
+
+    const messages = [
+        { role: 'system', content: systemPrompt },
+    ];
+    if (userMessage) {
+        messages.push({ role: 'user', content: userMessage });
+    }
+
+    const body = {
+        model: "qwen-qwq-32b",
+        messages,
+    };
+    if (jsonMode) {
+        body.response_format = { type: "json_object" };
+    }
+
+    const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+        body: JSON.stringify(body)
+    });
+    if (!response.ok) throw new Error(`Groq Error: ${response.status} - ${await response.text()}`);
+    return response.json();
+}
+
+/**
+ * LLM khusus untuk Chronos Engine (background tasks).
+ * Utama: Groq (Qwen3-32B) - Cepat & murah.
+ * Fallback: Qwen Turbo (Alibaba) jika Groq gagal.
+ */
+export async function queryChronosLLM(systemPrompt, userMessage = "", jsonMode = false) {
+    try {
+        console.log('[CHRONOS LLM] Menggunakan Groq Qwen3-32B...');
+        return await queryGroq(systemPrompt, userMessage, jsonMode);
+    } catch (error) {
+        console.warn('[CHRONOS LLM] Groq gagal, fallback ke Qwen Turbo:', error.message);
+        return await queryQwen(systemPrompt, [], userMessage, null, jsonMode);
+    }
+}

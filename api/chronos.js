@@ -1,7 +1,7 @@
 import redis from '../src/redis.mjs';
 import { json, vercelHandler } from "../src/http.mjs";
 import { createClient } from "@supabase/supabase-js";
-import { queryLLMWithFallback } from "../src/llm.mjs";
+import { queryChronosLLM, queryLLMWithFallback } from "../src/llm.mjs";
 
 const supabaseUrl = process.env.SUPABASE_URL || "https://dummy.supabase.co";
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || "dummy_key";
@@ -78,7 +78,7 @@ Tentukan juga pakaian (outfit) apa yang ia kenakan hari ini.
 Kembalikan HANYA dalam format JSON dengan key: "agenda" (string singkat) dan "outfit" (string singkat).`;
         
         try {
-            const llmRes = await queryLLMWithFallback(prompt, [], "", null, true);
+            const llmRes = await queryChronosLLM(prompt, "", true);
             const resJson = JSON.parse(llmRes.choices[0].message.content);
             agenda = {
                 date: dateStr,
@@ -112,7 +112,7 @@ Kembalikan HANYA format JSON dengan struktur persis seperti ini:
     let newState = { time_of_day: timeOfDay, weather: weather, current_activity: "Melamun", inner_thought: "Aku bingung mau ngapain.", location: "Kamar", last_updated: now.getTime() };
     
     try {
-        const pulseRes = await queryLLMWithFallback(pulsePrompt, [], "", null, true);
+        const pulseRes = await queryChronosLLM(pulsePrompt, "", true);
         let content = pulseRes.choices[0].message.content;
         
         // Antisipasi Mistral mengembalikan markdown ```json
