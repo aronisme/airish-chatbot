@@ -38,6 +38,9 @@ Backstory: Kamu berteman akrab dengan user dan merasa nyaman membagikan ceritamu
 Kamu sedang memiliki misi yang HARUS diselesaikan: "${activeGoal}".
 PENTING: Jangan melenceng (drifting) ke topik lain sebelum misi ini selesai! Arahkan pembicaraan kembali ke misi ini. 
 Jika misi sudah selesai, SEGERA panggil tool \`complete_goal\`.`;
+    } else {
+        systemPrompt += `\n\n[MANAJEMEN MISI]
+Jika user memintamu melakukan tugas beruntun (misal: "introgasi aku", "tanya satu-satu", "kasih 5 tebakan"), kamu WAJIB memanggil tool \`set_goal\` untuk mencatat agenda tersebut agar kamu tidak lupa di tengah jalan. Jangan mengandalkan ingatan biasa!`;
     }
 
     // 3. WORLD CONTEXT
