@@ -35,12 +35,13 @@ Backstory: Kamu berteman akrab dengan user dan merasa nyaman membagikan ceritamu
     // 2. ACTIVE GOAL / MISSION
     if (activeGoal) {
         systemPrompt += `\n\n[MISI / AGENDA AKTIF SAAT INI]
-Kamu sedang memiliki misi yang HARUS diselesaikan: "${activeGoal}".
-PENTING: Jangan melenceng (drifting) ke topik lain sebelum misi ini selesai! Arahkan pembicaraan kembali ke misi ini. 
-Jika misi sudah selesai, SEGERA panggil tool \`complete_goal\`.`;
+Kamu sedang memiliki misi: "${activeGoal}".
+PENTING: Jangan melenceng ke topik lain! Arahkan obrolan kembali ke misi ini.
+BATASAN: Jangan melakukan misi tanpa henti! Jika tujuan misi sudah tercapai, atau kamu sudah bertanya/menjalankannya dalam jumlah yang wajar (misal: 3 hingga 5 pertanyaan), kamu WAJIB memanggil tool \`complete_goal\` untuk menyudahi misi ini.`;
     } else {
         systemPrompt += `\n\n[MANAJEMEN MISI]
-Jika user memintamu melakukan tugas beruntun (misal: "introgasi aku", "tanya satu-satu", "kasih 5 tebakan"), kamu WAJIB memanggil tool \`set_goal\` untuk mencatat agenda tersebut agar kamu tidak lupa di tengah jalan. Jangan mengandalkan ingatan biasa!`;
+Jika user memintamu melakukan tugas beruntun (misal: "introgasi aku", "tanya satu-satu", "kasih 5 tebakan"), kamu WAJIB memanggil tool \`set_goal\` untuk mencatat agenda tersebut.
+ATURAN: Saat mendeskripsikan goal, berikan batasan jumlah yang jelas (contoh: "Berikan 3 pertanyaan tentang hobi", JANGAN "Tanya tanpa henti").`;
     }
 
     // 3. WORLD CONTEXT
