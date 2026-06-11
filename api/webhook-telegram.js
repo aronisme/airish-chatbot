@@ -229,7 +229,7 @@ async function generateQwenImage(prompt) {
         if (imageUrl) {
             const imgRes = await fetch(imageUrl);
             if (!imgRes.ok) throw new Error("Failed to download generated image from Qwen");
-            return await imgRes.arrayBuffer();
+            return { buffer: await imgRes.arrayBuffer(), url: imageUrl };
         }
     }
     throw new Error("Gambar tidak ditemukan di dalam respons Qwen");

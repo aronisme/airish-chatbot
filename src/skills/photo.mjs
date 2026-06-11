@@ -32,13 +32,21 @@ export async function executePhotoTool(args, context, services) {
     }
 
     try {
-        const imageBuffer = await generateQwenImage(prompt);
+        const generated = await generateQwenImage(prompt);
+        const imageBuffer = generated.buffer || generated;
+        const imageUrl = generated.url;
+
         const success = await sendTelegramPhotoBuffer(chatId, imageBuffer);
 
         if (success) {
-            // Karena Llama 4 Scout di Groq error saat menerima Base64, kita kembali ke Qwen Vision
-            const base64Image = `data:image/jpeg;base64,${imageBuffer.toString('base64')}`;
-            const description = await analyzeImage(base64Image);
+            let description;
+            if (imageUrl) {
+                // Gunakan public URL dari Qwen untuk menghindari error 4MB Base64 limit di Groq Llama 4 Scout
+                description = await analyzeImage(imageUrl);
+            } else {
+                const base64Image = `data:image/jpeg;base64,${Buffer.from(imageBuffer).toString('base64')}`;
+                description = await analyzeImage(base64Image);
+            }
             
             // Simpan ke Working Memory agar AI "ingat" dan "sadar" dengan foto yang baru saja dikirimnya
             const memoryText = `[Sistem: Kamu baru saja mengirimkan foto dirimu sendiri (selfie/pap) kepada user. Ini adalah apa yang kamu lihat di fotomu sendiri: "${description}"]`;
