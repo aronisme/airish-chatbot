@@ -41,7 +41,7 @@ Tugasmu:
 2. Pertahankan fakta-fakta spesifik yang unik (seperti nama film kesukaan, bahasa pemrograman, dll).
 3. Hapus fakta yang saling bertentangan dengan mengambil fakta yang paling logis atau dominan.
 4. Jangan menambahkan informasi baru apa pun.
-
+5. HAPUS TOTAL fakta-fakta yang sebenarnya adalah atribut/identitas dari Bot/Assistant (misalnya: tinggal di kos estetik, memakai piyama, rebahan, sifat manja, takut tetangga, dll). Fakta-fakta ini salah terekam sebagai memori user. Buang semuanya!
 Daftar Fakta Saat Ini:
 ${existingFactsStr}
 

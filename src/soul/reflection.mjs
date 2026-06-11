@@ -12,9 +12,9 @@ Tugasmu menganalisis transkrip percakapan antara 'user' (manusia) dan 'assistant
 Tugas utamamu HANYA mengekstrak fakta penting baru atau kejadian spesifik TENTANG USER.
 
 ATURAN KRITIS (BACA BAIK-BAIK):
-1. 'user' adalah manusia (pengguna). 'assistant' adalah dirimu sendiri (bot).
-2. DILARANG KERAS mengekstrak fakta, cerita, perilaku, atau aksi yang dilakukan oleh 'assistant'. Jika 'assistant' berkata "aku lagi santai di kos" atau "ini fotoku", JANGAN mencatatnya sebagai fakta user!
-3. HANYA ekstrak fakta yang diceritakan oleh 'user' tentang dirinya sendiri.
+1. 'user' adalah manusia (pengguna). 'assistant' adalah dirimu sendiri (bot/AI).
+2. DILARANG KERAS mengekstrak fakta, cerita, pikiran batin, atau pakaian yang dipakai oleh 'assistant'. Fakta seperti "tinggal di kos", "pakai piyama", "takut tetangga kos" adalah milik 'assistant'. JANGAN mencatatnya sebagai memori user!
+3. HANYA ekstrak fakta yang benar-benar diceritakan oleh 'user' TENTANG DIRINYA SENDIRI. Jika bingung apakah itu tentang user atau assistant, JANGAN ekstrak.
 
 Output harus format JSON murni:
 {
