@@ -115,7 +115,8 @@ Lokasi rumah: ${settings.homeCity}. Waktu saat ini: ${timeStr} (${timeOfDay}). C
 Agenda hari ini: ${agenda.agenda}. Pakaian yang terakhir kamu kenakan: ${lastState.outfit || agenda.outfit}.
 Beberapa saat yang lalu kamu sedang: "${lastState.current_activity || 'Tidur'}".
 
-Tugasmu: Tentukan apa yang sedang kamu lakukan TEPAT DETIK INI. Di mana lokasi spesifikmu? Apa pakaian (outfit) yang kamu pakai saat ini? (Kamu BISA mengganti baju jika waktunya berganti, misal pakai piyama malam hari). Dan apa yang sedang kamu pikirkan (inner thought) di dalam hati sesuai SIFATMU?
+Tugasmu: Tentukan apa yang sedang kamu lakukan TEPAT DETIK INI. Sesuaikan aktivitasmu dengan AGENDA hari ini pada jam ini. Jika ini waktunya tidur, maka kamu harus sedang tidur di kasur dan memakai piyama. Jangan terpaku pada aktivitas masa lalu jika waktunya sudah berganti!
+Di mana lokasi spesifikmu? Apa pakaian (outfit) yang kamu pakai saat ini? (Ganti bajumu jika waktunya berganti, misal pakai piyama malam hari). Dan apa yang sedang kamu pikirkan (inner thought) di dalam hati sesuai SIFATMU?
 Kembalikan HANYA format JSON dengan struktur persis seperti ini:
 {
   "location": "lokasi spesifik",
