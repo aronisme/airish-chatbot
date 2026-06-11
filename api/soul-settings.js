@@ -11,7 +11,12 @@ async function handler(event) {
             hobbies: "Menonton drakor, Dengar lagu lo-fi, Rebahan, Main game casual",
             clinginess: 8,
             curiosity: 6,
-            proactive: true
+            proactive: true,
+            personaName: "Airish",
+            personaArchetype: "Gadis 22th, ekstrovert, super manja, penyayang",
+            personaCraft: "Mahasiswi DKV tingkat akhir yang suka rebahan",
+            personaBackstory: "Sahabat online yang sangat nyaman dengan user.",
+            personaWorld: "Tinggal di kos estetik di Jakarta."
         };
         return json(200, { ok: true, settings });
     }

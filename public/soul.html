@@ -243,6 +243,7 @@
         <div class="tabs">
             <div class="tab active" onclick="openTab('env')">🌍 Lingkungan</div>
             <div class="tab" onclick="openTab('psy')">🧠 Psikologis</div>
+            <div class="tab" onclick="openTab('per')">🎭 Persona</div>
             <div class="tab" onclick="openTab('tel')">📡 Telemetri Live</div>
         </div>
 
@@ -288,6 +289,31 @@
                     <span class="slider"></span>
                 </label>
                 <label>Izinkan Proactive Chat (Chat Duluan)</label>
+            </div>
+            <button class="btn-save" onclick="saveSettings()">Simpan Konfigurasi</button>
+        </div>
+
+        <!-- TAB PERSONA -->
+        <div id="per" class="tab-content">
+            <div class="form-group">
+                <label>Nama AI</label>
+                <input type="text" id="personaName" placeholder="e.g., Airish">
+            </div>
+            <div class="form-group">
+                <label>Archetype (Sifat Utama)</label>
+                <input type="text" id="personaArchetype" placeholder="e.g., Gadis 22th, ekstrovert, super manja, penyayang">
+            </div>
+            <div class="form-group">
+                <label>Pekerjaan / Aktivitas Utama</label>
+                <input type="text" id="personaCraft" placeholder="e.g., Mahasiswi DKV tingkat akhir yang suka rebahan">
+            </div>
+            <div class="form-group">
+                <label>Backstory (Hubungan dengan User)</label>
+                <input type="text" id="personaBackstory" placeholder="e.g., Sahabat online yang sangat nyaman dengan user.">
+            </div>
+            <div class="form-group">
+                <label>World Context (Latar Tempat)</label>
+                <input type="text" id="personaWorld" placeholder="e.g., Tinggal di kos estetik di Jakarta.">
             </div>
             <button class="btn-save" onclick="saveSettings()">Simpan Konfigurasi</button>
         </div>
@@ -377,6 +403,13 @@
                     document.getElementById('curiosity').value = data.settings.curiosity || 6;
                     document.getElementById('cur-val').innerText = data.settings.curiosity || 6;
                     document.getElementById('proactive').checked = data.settings.proactive !== false;
+
+                    // Persona
+                    document.getElementById('personaName').value = data.settings.personaName || "Airish";
+                    document.getElementById('personaArchetype').value = data.settings.personaArchetype || "Gadis 22th, ekstrovert, super manja, penyayang";
+                    document.getElementById('personaCraft').value = data.settings.personaCraft || "Mahasiswi DKV tingkat akhir yang suka rebahan";
+                    document.getElementById('personaBackstory').value = data.settings.personaBackstory || "Sahabat online yang sangat nyaman dengan user.";
+                    document.getElementById('personaWorld').value = data.settings.personaWorld || "Tinggal di kos estetik di Jakarta.";
                 }
             } catch(e) {
                 console.log("Error fetching settings:", e);
@@ -391,7 +424,12 @@
                 hobbies: document.getElementById('hobbies').value,
                 clinginess: parseInt(document.getElementById('clinginess').value),
                 curiosity: parseInt(document.getElementById('curiosity').value),
-                proactive: document.getElementById('proactive').checked
+                proactive: document.getElementById('proactive').checked,
+                personaName: document.getElementById('personaName').value,
+                personaArchetype: document.getElementById('personaArchetype').value,
+                personaCraft: document.getElementById('personaCraft').value,
+                personaBackstory: document.getElementById('personaBackstory').value,
+                personaWorld: document.getElementById('personaWorld').value
             };
 
             try {

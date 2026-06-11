@@ -54,8 +54,8 @@ async function handler(event) {
             weather = cachedWeather;
         } else {
             const city = encodeURIComponent(settings.homeCity || "Jakarta");
-            // %C = Kondisi (Clear, Rain), %t = Temperatur (+28°C)
-            const weatherRes = await fetch(`https://wttr.in/${city}?format=%C+%t`);
+            // %C = Kondisi (Clear, Rain), %t = Temperatur (+28°C), m = Metrik, lang=id = Indonesia
+            const weatherRes = await fetch(`https://wttr.in/${city}?format=%C+%t&m&lang=id`);
             if (weatherRes.ok) {
                 weather = await weatherRes.text();
                 await redis.set('soul:chronos:weather', weather, { ex: 3600 }); // Simpan 1 jam agar tidak spam API
@@ -72,9 +72,9 @@ async function handler(event) {
 
     if (isMorning || !agenda) {
         console.log("[CHRONOS] Running Morning Routine to generate agenda...");
-        const prompt = `Buatlah agenda kegiatan harian secara singkat untuk gadis bernama Airish hari ini (${dateStr}). 
-Airish adalah seorang mahasiswi/pekerja freelance. 
-Tentukan juga pakaian (outfit) apa yang ia kenakan hari ini.
+        const prompt = `Buatlah agenda kegiatan harian secara singkat untuk hari ini (${dateStr}). 
+Namamu: ${settings.personaName || 'Airish'}. Sifat: ${settings.personaArchetype || 'Gadis ceria'}. Pekerjaan: ${settings.personaCraft || 'Mahasiswi'}.
+Berdasarkan sifat dan pekerjaanmu, tentukan agenda utamamu hari ini. Tentukan juga pakaian (outfit) awal apa yang kamu kenakan pagi ini.
 Kembalikan HANYA dalam format JSON dengan key: "agenda" (string singkat) dan "outfit" (string singkat).`;
         
         try {
@@ -97,16 +97,18 @@ Kembalikan HANYA dalam format JSON dengan key: "agenda" (string singkat) dan "ou
     let lastState = lastStateStr ? (typeof lastStateStr === 'string' ? JSON.parse(lastStateStr) : lastStateStr) : {};
 
     console.log("[CHRONOS] Running 15-Min Pulse (Inner Monologue)...");
-    const pulsePrompt = `Namamu Airish. Kamu berada di ${settings.homeCity}. Waktu saat ini: ${timeStr} (${timeOfDay}). Cuaca: ${weather}.
-Agenda utamamu hari ini: ${agenda.agenda}. Pakaianmu: ${agenda.outfit}.
+    const pulsePrompt = `Namamu: ${settings.personaName || 'Airish'}. Sifat: ${settings.personaArchetype || 'Ceria'}. Pekerjaan: ${settings.personaCraft || 'Mahasiswi'}.
+Lokasi rumah: ${settings.homeCity}. Waktu saat ini: ${timeStr} (${timeOfDay}). Cuaca: ${weather}.
+Agenda hari ini: ${agenda.agenda}. Pakaian yang terakhir kamu kenakan: ${lastState.outfit || agenda.outfit}.
 Beberapa saat yang lalu kamu sedang: "${lastState.current_activity || 'Tidur'}".
 
-Tugasmu: Tentukan apa yang sedang kamu lakukan TEPAT DETIK INI. Di mana kamu? Dan apa yang sedang kamu pikirkan (inner thought) di dalam hati?
+Tugasmu: Tentukan apa yang sedang kamu lakukan TEPAT DETIK INI. Di mana lokasi spesifikmu? Apa pakaian (outfit) yang kamu pakai saat ini? (Kamu BISA mengganti baju jika waktunya berganti, misal pakai piyama malam hari). Dan apa yang sedang kamu pikirkan (inner thought) di dalam hati sesuai SIFATMU?
 Kembalikan HANYA format JSON dengan struktur persis seperti ini:
 {
   "location": "lokasi spesifik",
   "activity": "aktivitas detik ini secara spesifik",
-  "inner_thought": "pikiran di dalam hati, keluhan, atau opini"
+  "outfit": "pakaian yang dipakai sekarang",
+  "inner_thought": "pikiran batin yang sangat sesuai dengan SIFATMU (jangan depresi jika kamu ceria)"
 }`;
 
     let newState = { time_of_day: timeOfDay, weather: weather, current_activity: "Melamun", inner_thought: "Aku bingung mau ngapain.", location: "Kamar", last_updated: now.getTime() };
@@ -124,7 +126,7 @@ Kembalikan HANYA format JSON dengan struktur persis seperti ini:
             location: pulseJson.location || "Kamar",
             current_activity: pulseJson.activity || "Rebahan santai",
             inner_thought: pulseJson.inner_thought || "Hari yang damai.",
-            outfit: agenda.outfit,
+            outfit: pulseJson.outfit || agenda.outfit,
             agenda: agenda.agenda
         };
         await redis.set('soul:embodiment:global', JSON.stringify(newState));
