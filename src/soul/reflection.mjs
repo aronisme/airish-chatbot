@@ -27,10 +27,23 @@ export async function runReflectionEngine(supabase, userId, workingMemory) {
     if (!apiKey || workingMemory.length < 2) return;
     
     try {
+        // Ambil memori lama agar AI tahu apa yang sudah tersimpan
+        const { data: existingMemories } = await supabase.from('memories').select('fact').eq('telegram_id', userId);
+        const existingFactsStr = existingMemories && existingMemories.length > 0 
+            ? existingMemories.map(m => `- ${m.fact}`).join('\n') 
+            : "Belum ada fakta yang tersimpan.";
+
         // Ambil 5 pesan terakhir untuk direnungkan
         const recentChats = workingMemory.slice(-5);
         const conversationString = recentChats.map(m => `${m.role}: ${m.content}`).join('\n');
         
+        const dynamicPrompt = `${REFLECTION_PROMPT}
+        
+[FAKTA YANG SUDAH DIKETAHUI SEBELUMNYA TENTANG USER]
+${existingFactsStr}
+
+ATURAN KRITIS: JANGAN PERNAH memasukkan ulang fakta yang maknanya sama persis atau sudah tercakup dalam daftar di atas! Hanya ekstrak fakta yang BENAR-BENAR BARU.`;
+
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -40,7 +53,7 @@ export async function runReflectionEngine(supabase, userId, workingMemory) {
             body: JSON.stringify({
                 model: "qwen/qwen3-32b", // Pakai model Qwen 32B untuk akurasi ekstraksi memori
                 messages: [
-                    { role: "system", content: REFLECTION_PROMPT },
+                    { role: "system", content: dynamicPrompt },
                     { role: "user", content: conversationString }
                 ],
                 response_format: { type: "json_object" },
