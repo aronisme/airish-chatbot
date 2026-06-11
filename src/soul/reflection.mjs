@@ -8,15 +8,22 @@ function getRandomGroqKey() {
 }
 
 const REFLECTION_PROMPT = `Kamu adalah mesin introspeksi psikologis. 
-Tugasmu menganalisis transkrip percakapan ini dan mengekstrak JIKA ada fakta penting baru atau kejadian spesifik tentang user.
+Tugasmu menganalisis transkrip percakapan antara 'user' (manusia) dan 'assistant' (bot/AI).
+Tugas utamamu HANYA mengekstrak fakta penting baru atau kejadian spesifik TENTANG USER.
+
+ATURAN KRITIS (BACA BAIK-BAIK):
+1. 'user' adalah manusia (pengguna). 'assistant' adalah dirimu sendiri (bot).
+2. DILARANG KERAS mengekstrak fakta, cerita, perilaku, atau aksi yang dilakukan oleh 'assistant'. Jika 'assistant' berkata "aku lagi santai di kos" atau "ini fotoku", JANGAN mencatatnya sebagai fakta user!
+3. HANYA ekstrak fakta yang diceritakan oleh 'user' tentang dirinya sendiri.
+
 Output harus format JSON murni:
 {
-  "new_facts": ["fakta 1", "fakta 2"], // Jika ada informasi permanen (contoh: Punya anjing bernama Budi)
+  "new_facts": ["fakta 1", "fakta 2"], // Fakta permanen (contoh: Punya anjing bernama Budi)
   "new_events": [
-     {"event": "User bercerita dia baru putus cinta hari ini", "emotion": "sad"} // Jika ada kejadian/pengalaman spesifik
+     {"event": "User bercerita dia baru putus cinta hari ini", "emotion": "sad"} // Kejadian spesifik yang dialami user
   ]
 }
-Jika tidak ada informasi yang penting untuk diingat, kembalikan array kosong []. Jangan berikan markdown block.`;
+Jika tidak ada informasi yang penting untuk diingat tentang USER, kembalikan array kosong []. Jangan berikan markdown block.`;
 
 /**
  * Reflection Engine (Berjalan di background via waitUntil)
