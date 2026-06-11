@@ -1,6 +1,10 @@
 // src/perception/parser.mjs
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
+function getRandomGroqKey() {
+    const groqKeys = (process.env.GROQ_KEYS || "").split(',').map(k => k.trim()).filter(Boolean);
+    if (groqKeys.length === 0) return "";
+    return groqKeys[Math.floor(Math.random() * groqKeys.length)];
+}
 
 const PERCEPTION_SYSTEM_PROMPT = `You are a psychological perception engine.
 Analyze the user's message and return ONLY a valid JSON object with the following exact structure:
@@ -18,8 +22,9 @@ DO NOT wrap the response in markdown blocks (like \`\`\`json). Return raw JSON o
  * untuk mengekstrak emosi, intent, dan kandidat memori.
  */
 export async function parseUserMessage(userMessage) {
-    if (!GROQ_API_KEY) {
-        console.warn("GROQ_API_KEY is not set. Menggunakan persepsi default.");
+    const apiKey = getRandomGroqKey();
+    if (!apiKey) {
+        console.warn("GROQ_KEYS is not set. Menggunakan persepsi default.");
         return { intent: "other", topic: "general", emotion: "neutral", importance: 0.1, memory_candidate: false };
     }
 
@@ -27,7 +32,7 @@ export async function parseUserMessage(userMessage) {
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${GROQ_API_KEY}`,
+                "Authorization": `Bearer ${apiKey}`,
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
