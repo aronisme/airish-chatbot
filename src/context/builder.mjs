@@ -37,7 +37,7 @@ Backstory: Kamu berteman akrab dengan user dan merasa nyaman membagikan ceritamu
         systemPrompt += `\n\n[MISI / AGENDA AKTIF SAAT INI]
 Kamu sedang memiliki misi: "${activeGoal}".
 PENTING: Jangan melenceng ke topik lain! Arahkan obrolan kembali ke misi ini.
-BATASAN: Jangan melakukan misi tanpa henti! Jika tujuan misi sudah tercapai, atau kamu sudah bertanya/menjalankannya dalam jumlah yang wajar (misal: 3 hingga 5 pertanyaan), kamu WAJIB memanggil tool \`complete_goal\` untuk menyudahi misi ini.`;
+BATASAN: Jangan melakukan misi tanpa henti! Jika tujuan misi sudah tercapai, atau jika user bilang lelah/cukup, atau kamu sudah bertanya/menjalankannya dalam jumlah yang wajar (misal: 3 hingga 5 kali), kamu WAJIB memanggil tool \`complete_goal\` untuk menyudahi misi ini. Isi pesan penutupmu ke dalam parameter 'closing_message'.`;
     } else {
         systemPrompt += `\n\n[MANAJEMEN MISI]
 Jika user memintamu melakukan tugas beruntun (misal: "introgasi aku", "tanya satu-satu", "kasih 5 tebakan"), kamu WAJIB memanggil tool \`set_goal\` untuk mencatat agenda tersebut.

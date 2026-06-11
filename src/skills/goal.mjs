@@ -22,10 +22,16 @@ export const completeGoalToolDefinition = {
     type: "function",
     function: {
         name: "complete_goal",
-        description: "Panggil alat ini jika misi atau agenda aktif yang sedang berjalan SUDAH SELESAI seluruhnya. Ini akan menghapus agenda dari pikiranmu agar kamu kembali santai.",
+        description: "Panggil alat ini jika misi atau agenda aktif yang sedang berjalan SUDAH SELESAI seluruhnya, ATAU jika user minta berhenti/capek. Ini akan menghapus agenda dari pikiranmu.",
         parameters: {
             type: "object",
-            properties: {}
+            properties: {
+                closing_message: {
+                    type: "string",
+                    description: "Pesan penutup atau kesimpulan asik yang ingin kamu sampaikan ke user sebagai tanda misinya berakhir."
+                }
+            },
+            required: ["closing_message"]
         }
     }
 };
@@ -59,26 +65,18 @@ export async function executeSetGoalTool(args, context, services) {
 }
 
 export async function executeCompleteGoalTool(args, context, services) {
-    const { chatId, userId, history, systemPrompt, text, toolCall, message } = context;
-    const { sendTelegram, queryLLMWithFallback } = services;
+    const { chatId, userId } = context;
+    const { sendTelegram } = services;
+    const { closing_message } = args;
     
     await setActiveGoal(userId, null);
     console.log(`[GOAL COMPLETED] User ${userId}`);
     
-    const toolResponseMessages = [
-        { role: 'system', content: systemPrompt },
-        ...(history || []).map((h) => ({ role: h.role === 'user' ? 'user' : 'assistant', content: h.content })),
-        { role: 'user', content: text },
-        message,
-        { role: 'tool', name: 'complete_goal', tool_call_id: toolCall.id, content: JSON.stringify({ success: true, message: "Goal cleared." }) }
-    ];
-
+    const replyText = closing_message || "Oke, misi selesai! Mari ngobrol bebas lagi.";
     try {
-        const followupData = await queryLLMWithFallback(systemPrompt, null, null, toolResponseMessages);
-        const replyText = followupData.choices?.[0]?.message?.content || "Yey, akhirnya kelar juga!";
         await sendTelegram('sendMessage', { chat_id: chatId, text: replyText });
         await saveWorkingMemory(userId, 'assistant', replyText);
     } catch (e) {
-        console.error("Complete Goal Followup Error:", e);
+        console.error("Complete Goal Error:", e);
     }
 }
