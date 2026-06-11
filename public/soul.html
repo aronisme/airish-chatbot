@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airish Soul Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --neon-accent: #a855f7;
+            --neon-glow: 0 0 10px rgba(168, 85, 247, 0.5);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(168, 85, 247, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.15) 0px, transparent 50%);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            font-weight: 800;
+            font-size: 2rem;
+            margin-bottom: 5px;
+            background: linear-gradient(to right, #a855f7, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 10px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .tab.active {
+            background: rgba(168, 85, 247, 0.2);
+            color: var(--neon-accent);
+            box-shadow: var(--neon-glow);
+        }
+
+        .tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-main);
+            font-size: 0.9rem;
+        }
+
+        input[type="text"], input[type="number"], input[type="time"], select {
+            width: 100%;
+            padding: 12px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        input[type="text"]:focus, select:focus {
+            border-color: var(--neon-accent);
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        input[type="range"] {
+            flex-grow: 1;
+            accent-color: var(--neon-accent);
+        }
+
+        .toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Toggle Switch CSS */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(255,255,255,0.1);
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px; width: 18px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--neon-accent); }
+        input:checked + .slider:before { transform: translateX(26px); }
+
+        .btn-save {
+            background: linear-gradient(to right, #a855f7, #3b82f6);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px var(--neon-accent);
+        }
+
+        /* Telemetry Card */
+        .telemetry-card {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--neon-accent);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--neon-glow);
+        }
+
+        .telemetry-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            border-bottom: 1px dashed rgba(255,255,255,0.1);
+            padding-bottom: 5px;
+        }
+        .telemetry-item:last-child { border-bottom: none; }
+        
+        .value { color: var(--neon-accent); font-weight: bold; }
+        
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1;
+            right: 30px;
+            bottom: 30px;
+            font-size: 15px;
+            transition: opacity 0.5s;
+            opacity: 0;
+            background: linear-gradient(to right, #22c55e, #16a34a);
+        }
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Airish Soul Dashboard</h1>
+        <p class="subtitle">Kontrol Arsitektur Chronos & Simulasi Entitas</p>
+
+        <div class="tabs">
+            <div class="tab active" onclick="openTab('env')">🌍 Lingkungan</div>
+            <div class="tab" onclick="openTab('psy')">🧠 Psikologis</div>
+            <div class="tab" onclick="openTab('tel')">📡 Telemetri Live</div>
+        </div>
+
+        <!-- TAB LINGKUNGAN -->
+        <div id="env" class="tab-content active">
+            <div class="form-group">
+                <label>Home Base City (Untuk Cuaca)</label>
+                <input type="text" id="homeCity" placeholder="e.g., Jakarta, Indonesia" value="Jakarta, Indonesia">
+            </div>
+            <div class="form-group">
+                <label>Waktu Tidur Normal (Circadian Rhythm)</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="time" id="sleepTime" value="01:00"> s/d <input type="time" id="wakeTime" value="07:00">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Kumpulan Hobi / Micro-Activities (Pisahkan dengan koma)</label>
+                <input type="text" id="hobbies" value="Menonton drakor, Dengar lagu lo-fi, Rebahan, Main game casual">
+            </div>
+            <button class="btn-save" onclick="saveSettings()">Simpan Konfigurasi</button>
+        </div>
+
+        <!-- TAB PSIKOLOGIS -->
+        <div id="psy" class="tab-content">
+            <div class="form-group">
+                <label>Clinginess Level (Connection Drive Sensitivity)</label>
+                <div class="slider-container">
+                    <input type="range" id="clinginess" min="1" max="10" value="8" oninput="document.getElementById('cling-val').innerText = this.value">
+                    <span id="cling-val">8</span>/10
+                </div>
+                <small style="color:var(--text-muted)">Semakin tinggi, AI semakin cepat merasa kesepian.</small>
+            </div>
+            <div class="form-group">
+                <label>Curiosity Level (Rasa Kepo)</label>
+                <div class="slider-container">
+                    <input type="range" id="curiosity" min="1" max="10" value="6" oninput="document.getElementById('cur-val').innerText = this.value">
+                    <span id="cur-val">6</span>/10
+                </div>
+            </div>
+            <div class="form-group toggle">
+                <label class="switch">
+                    <input type="checkbox" id="proactive" checked>
+                    <span class="slider"></span>
+                </label>
+                <label>Izinkan Proactive Chat (Chat Duluan)</label>
+            </div>
+            <button class="btn-save" onclick="saveSettings()">Simpan Konfigurasi</button>
+        </div>
+
+        <!-- TAB TELEMETRI -->
+        <div id="tel" class="tab-content">
+            <p>Status terkini Airish di dalam server (Auto-refresh tiap 30 detik).</p>
+            <div class="telemetry-card">
+                <div class="telemetry-item">
+                    <span>Waktu Internal</span>
+                    <span class="value" id="live-time">Siang</span>
+                </div>
+                <div class="telemetry-item">
+                    <span>Cuaca</span>
+                    <span class="value" id="live-weather">Cerah</span>
+                </div>
+                <div class="telemetry-item">
+                    <span>Aktivitas Detik Ini</span>
+                    <span class="value" id="live-activity">Mendengarkan musik santai</span>
+                </div>
+                <div class="telemetry-item">
+                    <span>Lokasi</span>
+                    <span class="value" id="live-location">Kamar</span>
+                </div>
+                <div class="telemetry-item" style="flex-direction: column; gap: 5px;">
+                    <span>Inner Thought (Pikiran Batin)</span>
+                    <span class="value" id="live-thought" style="font-style: italic; color: #cbd5e1;">"Hari yang damai..."</span>
+                </div>
+            </div>
+            <button class="btn-save" style="background: transparent; border: 1px solid var(--neon-accent); color: var(--neon-accent);" onclick="fetchTelemetry()">Refresh Data Manual</button>
+        </div>
+    </div>
+    
+    <div id="toast">Berhasil disimpan!</div>
+
+    <script>
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            toast.innerText = message;
+            toast.className = "show";
+            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+
+        function openTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        async function fetchSettings() {
+            try {
+                const res = await fetch('/api/soul-settings');
+                const data = await res.json();
+                if(data.settings) {
+                    document.getElementById('homeCity').value = data.settings.homeCity || "Jakarta, Indonesia";
+                    document.getElementById('sleepTime').value = data.settings.sleepTime || "01:00";
+                    document.getElementById('wakeTime').value = data.settings.wakeTime || "07:00";
+                    document.getElementById('hobbies').value = data.settings.hobbies || "Menonton drakor, Dengar lagu lo-fi, Rebahan";
+                    document.getElementById('clinginess').value = data.settings.clinginess || 8;
+                    document.getElementById('cling-val').innerText = data.settings.clinginess || 8;
+                    document.getElementById('curiosity').value = data.settings.curiosity || 6;
+                    document.getElementById('cur-val').innerText = data.settings.curiosity || 6;
+                    document.getElementById('proactive').checked = data.settings.proactive !== false;
+                }
+            } catch(e) {
+                console.log("Error fetching settings:", e);
+            }
+        }
+
+        async function saveSettings() {
+            const payload = {
+                homeCity: document.getElementById('homeCity').value,
+                sleepTime: document.getElementById('sleepTime').value,
+                wakeTime: document.getElementById('wakeTime').value,
+                hobbies: document.getElementById('hobbies').value,
+                clinginess: parseInt(document.getElementById('clinginess').value),
+                curiosity: parseInt(document.getElementById('curiosity').value),
+                proactive: document.getElementById('proactive').checked
+            };
+
+            try {
+                const res = await fetch('/api/soul-settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if(data.ok) showToast("Pengaturan SOUL berhasil disimpan!");
+            } catch(e) {
+                console.log("Error saving settings:", e);
+                showToast("Gagal menyimpan!");
+            }
+        }
+
+        async function fetchTelemetry() {
+            try {
+                const res = await fetch('/api/chronos');
+                const data = await res.json();
+                if(data.state) {
+                    document.getElementById('live-time').innerText = data.state.time_of_day || '-';
+                    document.getElementById('live-weather').innerText = data.state.weather || '-';
+                    document.getElementById('live-activity').innerText = data.state.current_activity || '-';
+                    document.getElementById('live-location').innerText = data.state.location || '-';
+                    document.getElementById('live-thought').innerText = `"${data.state.inner_thought || '-'}"`;
+                }
+            } catch(e) {
+                console.log("Error fetching telemetry:", e);
+            }
+        }
+
+        // Init load
+        fetchSettings();
+        fetchTelemetry();
+    </script>
+</body>
+</html>

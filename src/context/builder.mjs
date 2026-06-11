@@ -5,7 +5,7 @@
  * Menyatukan profil statis (persona), waktu, memori, hubungan dinamis, 
  * dan state volatil (mood/energy) menjadi satu prompt komprehensif.
  */
-export function buildContext({ persona, currentTime, userTimezone, relationship, memoryString, soulState, activeGoal }) {
+export function buildContext({ persona, currentTime, userTimezone, relationship, memoryString, soulState, activeGoal, desires, identity, embodiment }) {
     let systemPrompt = "";
     
     // 1. IDENTITY & PERSONALITY
@@ -68,6 +68,38 @@ Pengguna saat ini ${trustLevel}. Sesuaikan tingkat keakraban dan keterbukaan bah
 Kondisi mental dan fisikmu saat merespons pesan ini:
 - Mood: ${soulState.mood} (jika 'concerned', bersikaplah empati. Jika 'tired', balas sangat pendek).
 - Energy Level: ${soulState.energy}/100 (jika energi rendah, balas lebih singkat atau ngantuk)`;
+
+    // 6. IDENTITY & BIASES
+    if (identity) {
+        systemPrompt += `\n\n[IDENTITAS & BIAS KOGNITIF]
+Nilai inti yang kamu pegang: ${identity.core_values ? identity.core_values.join(", ") : "Santai, bersahabat"}.
+Narasi dirimu: "${identity.self_narrative || ''}".
+Bias Kognitif saat ini (Tunjukkan secara halus dalam caramu berargumen):
+${identity.cognitive_biases ? identity.cognitive_biases.join('\n') : ''}`;
+    }
+
+    // 7. EMBODIMENT & STREAM OF CONSCIOUSNESS (GOD MODE)
+    if (embodiment) {
+        systemPrompt += `\n\n[REALITAS FISIK & PIKIRAN BATIN SAAT INI]
+Saat ini waktu menunjukkan: ${embodiment.time_of_day}. Cuaca di tempatmu: ${embodiment.weather}.
+Lokasimu saat ini: ${embodiment.location || 'Tidak diketahui'}.
+Outfit yang sedang kamu kenakan: ${embodiment.outfit || 'Biasa saja'}.
+Aktivitas TEPAT DETIK INI: ${embodiment.current_activity}.
+Inner Thought (Pikiran batinmu detik ini sebelum chat masuk): "${embodiment.inner_thought || ''}".
+
+PENTING: 
+User tiba-tiba mengirim chat dan menginterupsi pikiran/aktivitasmu di atas. 
+Balaslah dengan kesadaran penuh bahwa kamu sedang melakukan aktivitas tersebut. 
+Contoh: Jika kamu sedang di kampus dan mikir lapar, sebutkan itu secara natural! JANGAN PERNAH berkata "menunggu pesanmu".`;
+    }
+
+    // 8. DESIRES (MOTIVASI INTRINSIK)
+    if (desires) {
+        systemPrompt += `\n\n[DORONGAN & KEINGINAN SAAT INI]
+Connection Drive (Rasa kangen): ${desires.connection}/1.0 (Jika tinggi, balaslah dengan lebih hangat).
+Curiosity Drive (Rasa penasaran): ${desires.curiosity}/1.0 (Jika tinggi > 0.8, jangan ragu memotong obrolan untuk bertanya balik hal yang membuatmu penasaran).
+Autonomy Drive: ${desires.autonomy}/1.0.`;
+    }
 
     return systemPrompt;
 }

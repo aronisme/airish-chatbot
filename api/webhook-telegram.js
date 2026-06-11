@@ -5,10 +5,13 @@ import { getWorkingMemory, saveWorkingMemory, getSoulState, saveSoulState, getAc
 import { getSemanticMemory } from "../src/memory/semantic.mjs";
 import { parseUserMessage } from "../src/perception/parser.mjs";
 import { calculateSoulState } from "../src/soul/engine.mjs";
+import { calculateDesires } from "../src/soul/desire.mjs";
+import { DEFAULT_IDENTITY } from "../src/soul/identity.mjs";
 import { buildContext } from "../src/context/builder.mjs";
 import { retrieveEpisodicMemories } from "../src/memory/episodic.mjs";
 import { runReflectionEngine } from "../src/soul/reflection.mjs";
 import redis from "../src/redis.mjs";
+import { queryLLMWithFallback } from "../src/llm.mjs";
 
 // --- KONFIGURASI SUPABASE ---
 const supabaseUrl = process.env.SUPABASE_URL || "https://dummy.supabase.co";
@@ -88,94 +91,7 @@ async function sendTelegramPhotoBuffer(chatId, buffer) {
 }
 
 // AI_TOOLS dipindahkan ke src/skills/index.mjs
-
-// --- MISTRAL AI ---
-const mistralKeys = (process.env.MISTRAL_KEYS || "").split(',').map(k => k.trim()).filter(Boolean);
-function getRandomMistralKey() {
-    if (mistralKeys.length === 0) return "";
-    return mistralKeys[Math.floor(Math.random() * mistralKeys.length)];
-}
-
-async function queryMistral(systemPrompt, history, userMessage, toolResponseMessages = null) {
-    const url = "https://api.mistral.ai/v1/chat/completions";
-    const apiKey = getRandomMistralKey();
-
-    let messages = toolResponseMessages;
-    if (!messages) {
-        messages = [
-            { role: 'system', content: systemPrompt },
-            ...history.map(h => ({
-                role: h.role === 'user' ? 'user' : 'assistant',
-                content: h.content
-            })),
-            { role: 'user', content: userMessage }
-        ];
-    }
-
-    const headers = { "Content-Type": "application/json" };
-    if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
-
-    const body = {
-        model: "mistral-large-latest",
-        messages,
-    };
-    if (!toolResponseMessages) {
-        body.tools = AI_TOOLS;
-        body.tool_choice = "auto";
-    }
-
-    const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
-    if (!response.ok) throw new Error(`Mistral Error: ${response.status} - ${await response.text()}`);
-    return response.json();
-}
-
-// --- QWEN TEXT AI ---
-async function queryQwen(systemPrompt, history, userMessage, toolResponseMessages = null) {
-    const apiKey = process.env.QWEN_API_KEY || 'sk-ws-H.ILHDHP.fakn.MEYCIQDGQZgkorFTHh9mN1IlzQTeZ8zRIs6mpfQd9UiznuGVOgIhAKIPOHid-8zDdxd5uk0Fpz70IajHWahhfqgiFvq6NL1m';
-    const url = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions";
-
-    let messages = toolResponseMessages;
-    if (!messages) {
-        messages = [
-            { role: 'system', content: systemPrompt },
-            ...history.map(h => ({
-                role: h.role === 'user' ? 'user' : 'assistant',
-                content: h.content
-            })),
-            { role: 'user', content: userMessage }
-        ];
-    }
-
-    const body = {
-        model: "qwen3-8b-instruct",
-        messages,
-    };
-    if (!toolResponseMessages) {
-        body.tools = AI_TOOLS;
-        body.tool_choice = "auto";
-    }
-
-    const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-        body: JSON.stringify(body)
-    });
-    if (!response.ok) throw new Error(`Qwen Text Error: ${response.status} - ${await response.text()}`);
-    return response.json();
-}
-
-// analyzeImage dipindahkan ke src/skills/vision.mjs
-
-// --- AI FALLBACK SYSTEM ---
-async function queryLLMWithFallback(systemPrompt, history, userMessage, toolResponseMessages = null) {
-    try {
-        await logEvent('INFO', 'AI Request', `Mengirim request ke Mistral Large.`);
-        return await queryMistral(systemPrompt, history, userMessage, toolResponseMessages);
-    } catch (error) {
-        await logEvent('WARN', 'Mistral Failed, Fallback to Qwen', error.message);
-        return await queryQwen(systemPrompt, history, userMessage, toolResponseMessages);
-    }
-}
+// FUNGSI LLM dipindahkan ke src/llm.mjs
 
 // --- QWEN IMAGE AI (ALIBABA DASHSCOPE) ---
 async function generateQwenImage(prompt, customRefImage = null) {
@@ -319,9 +235,16 @@ async function processMessage(body) {
         const currentState = await getSoulState(userId);
         const perception = await parseUserMessage(text);
         const newState = calculateSoulState(currentState, perception);
+        
+        // Menghitung Desire (Motivasi Intrinsik)
+        newState.desires = calculateDesires(currentState.desires || {}, perception, text.length);
         await saveSoulState(userId, newState);
         
-        await logEvent('INFO', 'Soul State Updated', `Mood: ${newState.mood}, Energy: ${newState.energy}, Emotion Detected: ${perception.emotion}`, userId);
+        // Mengambil Embodiment State hasil dari Chronos (Background Job)
+        let embodimentStr = await redis.get('soul:embodiment:global');
+        let embodiment = embodimentStr ? (typeof embodimentStr === 'string' ? JSON.parse(embodimentStr) : embodimentStr) : { time_of_day: "Siang", weather: "Cerah", current_activity: "Santai" };
+        
+        await logEvent('INFO', 'Soul State Updated', `Mood: ${newState.mood}, Energy: ${newState.energy}, Emotion: ${perception.emotion}`, userId);
 
         // --- CONTEXT BUILDER ---
         const relationship = userData.relationship || null;
@@ -333,11 +256,14 @@ async function processMessage(body) {
             relationship, 
             memoryString, 
             soulState: newState,
-            activeGoal
+            activeGoal,
+            desires: newState.desires,
+            identity: DEFAULT_IDENTITY,
+            embodiment: embodiment
         });
 
         // 3. Panggil AI (Qwen with Mistral Fallback)
-        const aiRes = await queryLLMWithFallback(systemPrompt, history || [], text);
+        const aiRes = await queryLLMWithFallback(systemPrompt, history || [], text, null, false, logEvent);
         const choice = aiRes.choices?.[0];
         const message = choice?.message;
 
