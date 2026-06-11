@@ -7,8 +7,8 @@ const supabaseUrl = process.env.SUPABASE_URL || "https://dummy.supabase.co";
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || "dummy_key";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-async function handler(req) {
-    if (req.method !== 'POST' && req.method !== 'GET') {
+async function handler(event) {
+    if (event.httpMethod !== 'POST' && event.httpMethod !== 'GET') {
         return json(405, { error: 'Method not allowed' });
     }
 
@@ -19,9 +19,9 @@ async function handler(req) {
         const logEntry = {
             type: 'incoming',
             timestamp: now.toISOString(),
-            headers: req.headers,
-            body: req.body || {},
-            query: req.query || {},
+            headers: event.headers,
+            body: event.body || {},
+            query: event.queryStringParameters || {},
             note: "Chronos Triggered by GAS"
         };
         await redis.lpush('gas:testing:logs', JSON.stringify(logEntry));
