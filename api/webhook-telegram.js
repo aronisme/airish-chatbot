@@ -116,7 +116,7 @@ async function queryMistral(systemPrompt, history, userMessage, toolResponseMess
     if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
 
     const body = {
-        model: "mistral-small-latest",
+        model: "mistral-medium-latest",
         messages,
     };
     if (!toolResponseMessages) {
