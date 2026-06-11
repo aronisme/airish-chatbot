@@ -182,7 +182,7 @@ async function generateQwenImage(prompt, customRefImage = null) {
     const apiKey = process.env.QWEN_API_KEY || 'sk-ws-H.ILHDHP.fakn.MEYCIQDGQZgkorFTHh9mN1IlzQTeZ8zRIs6mpfQd9UiznuGVOgIhAKIPOHid-8zDdxd5uk0Fpz70IajHWahhfqgiFvq6NL1m';
     const host = 'https://ws-9eq65lbzoayak8np.ap-southeast-1.maas.aliyuncs.com';
     const endpoint = `${host}/api/v1/services/aigc/multimodal-generation/generation`;
-    const refImageUrl = customRefImage || 'https://airish-chatbot-5p18.vercel.app/airish.png';
+    const refImageUrl = customRefImage || 'https://airish-chatbot-5p18.vercel.app/airish.jpg';
 
     const response = await fetch(endpoint, {
         method: "POST",
