@@ -16,7 +16,7 @@ export async function analyzeImage(imageBase64) {
             {
                 role: "user",
                 content: [
-                    { type: "text", text: "Tolong deskripsikan gambar ini dengan sangat detail dalam bahasa Indonesia. Jika ini adalah gambar pakaian/baju, sebutkan warna, bahan, motif, dan gayanya. (Maksimal 2-3 kalimat)" },
+                    { type: "text", text: "Tolong deskripsikan foto selfie/pap ini dengan sangat komprehensif dalam bahasa Indonesia. Ceritakan detail yang sangat spesifik meliputi: 1) Pakaian yang dipakai (warna, bentuk potongan baju/celana/pakaian dalam, tekstur/bahan, renda/tali/motif), 2) Pose tubuh dan gestur tangan, 3) Ekspresi wajah dan riasan (makeup), serta 4) Suasana latar belakang (background) tempat foto ini diambil. (Maksimal 4-5 kalimat)" },
                     { type: "image_url", image_url: { url: imageBase64 } }
                 ]
             }
