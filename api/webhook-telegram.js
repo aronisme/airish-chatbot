@@ -116,7 +116,7 @@ async function queryGroq(systemPrompt, history, userMessage, toolResponseMessage
     if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
 
     const body = {
-        model: "meta-llama/llama-4-scout-17b-16e-instruct",
+        model: "llama-3.3-70b-versatile",
         messages,
     };
     if (!toolResponseMessages) {
