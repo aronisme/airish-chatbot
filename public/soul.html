@@ -294,30 +294,54 @@
 
         <!-- TAB TELEMETRI -->
         <div id="tel" class="tab-content">
-            <p>Status terkini Airish di dalam server (Auto-refresh tiap 30 detik).</p>
+            <p>Status terkini Airish di dalam server. <span id="last-update" style="color:var(--neon-accent); font-size:0.8rem;"></span></p>
+            
+            <h3 style="margin:15px 0 10px; color: var(--neon-accent); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">🌍 Embodiment (Realitas Fisik)</h3>
             <div class="telemetry-card">
                 <div class="telemetry-item">
                     <span>Waktu Internal</span>
-                    <span class="value" id="live-time">Siang</span>
+                    <span class="value" id="live-time">-</span>
                 </div>
                 <div class="telemetry-item">
                     <span>Cuaca</span>
-                    <span class="value" id="live-weather">Cerah</span>
-                </div>
-                <div class="telemetry-item">
-                    <span>Aktivitas Detik Ini</span>
-                    <span class="value" id="live-activity">Mendengarkan musik santai</span>
+                    <span class="value" id="live-weather">-</span>
                 </div>
                 <div class="telemetry-item">
                     <span>Lokasi</span>
-                    <span class="value" id="live-location">Kamar</span>
+                    <span class="value" id="live-location">-</span>
+                </div>
+                <div class="telemetry-item">
+                    <span>Aktivitas Detik Ini</span>
+                    <span class="value" id="live-activity">-</span>
+                </div>
+                <div class="telemetry-item">
+                    <span>Outfit</span>
+                    <span class="value" id="live-outfit">-</span>
                 </div>
                 <div class="telemetry-item" style="flex-direction: column; gap: 5px;">
-                    <span>Inner Thought (Pikiran Batin)</span>
-                    <span class="value" id="live-thought" style="font-style: italic; color: #cbd5e1;">"Hari yang damai..."</span>
+                    <span>💭 Inner Thought</span>
+                    <span class="value" id="live-thought" style="font-style: italic; color: #cbd5e1;">"-"</span>
                 </div>
             </div>
-            <button class="btn-save" style="background: transparent; border: 1px solid var(--neon-accent); color: var(--neon-accent);" onclick="fetchTelemetry()">Refresh Data Manual</button>
+
+            <h3 style="margin:20px 0 10px; color: #3b82f6; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">📅 Agenda Hari Ini</h3>
+            <div class="telemetry-card" style="border-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);">
+                <div class="telemetry-item">
+                    <span>Tanggal</span>
+                    <span class="value" id="live-agenda-date" style="color: #3b82f6;">-</span>
+                </div>
+                <div class="telemetry-item" style="flex-direction: column; gap: 5px;">
+                    <span>Rencana Kegiatan</span>
+                    <span class="value" id="live-agenda" style="color: #93c5fd; font-size: 0.9rem;">-</span>
+                </div>
+            </div>
+
+            <h3 style="margin:20px 0 10px; color: #f472b6; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">🧠 Soul State (Per User)</h3>
+            <div id="user-states-container">
+                <p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada data user.</p>
+            </div>
+
+            <button class="btn-save" style="background: transparent; border: 1px solid var(--neon-accent); color: var(--neon-accent);" onclick="fetchTelemetry()">🔄 Refresh Data Manual</button>
         </div>
     </div>
     
@@ -386,15 +410,58 @@
 
         async function fetchTelemetry() {
             try {
-                const res = await fetch('/api/chronos');
+                const res = await fetch('/api/soul-telemetry');
                 const data = await res.json();
-                if(data.state) {
-                    document.getElementById('live-time').innerText = data.state.time_of_day || '-';
-                    document.getElementById('live-weather').innerText = data.state.weather || '-';
-                    document.getElementById('live-activity').innerText = data.state.current_activity || '-';
-                    document.getElementById('live-location').innerText = data.state.location || '-';
-                    document.getElementById('live-thought').innerText = `"${data.state.inner_thought || '-'}"`;
+                
+                // Embodiment
+                if(data.embodiment) {
+                    const e = data.embodiment;
+                    document.getElementById('live-time').innerText = e.time_of_day || '-';
+                    document.getElementById('live-weather').innerText = e.weather || '-';
+                    document.getElementById('live-activity').innerText = e.current_activity || '-';
+                    document.getElementById('live-location').innerText = e.location || '-';
+                    document.getElementById('live-outfit').innerText = e.outfit || '-';
+                    document.getElementById('live-thought').innerText = `"${e.inner_thought || '-'}"`;
+                    
+                    if(e.last_updated) {
+                        const ago = Math.round((Date.now() - e.last_updated) / 60000);
+                        document.getElementById('last-update').innerText = `(Update ${ago} menit lalu)`;
+                    }
                 }
+
+                // Agenda
+                if(data.agenda) {
+                    document.getElementById('live-agenda-date').innerText = data.agenda.date || '-';
+                    document.getElementById('live-agenda').innerText = data.agenda.agenda || '-';
+                }
+
+                // Cuaca mentah
+                if(data.weather) {
+                    document.getElementById('live-weather').innerText = data.weather;
+                }
+
+                // User Soul States
+                if(data.userStates && data.userStates.length > 0) {
+                    const container = document.getElementById('user-states-container');
+                    container.innerHTML = '';
+                    data.userStates.forEach(u => {
+                        const card = document.createElement('div');
+                        card.className = 'telemetry-card';
+                        card.style.borderColor = '#f472b6';
+                        card.style.boxShadow = '0 0 10px rgba(244, 114, 182, 0.3)';
+                        card.style.marginBottom = '10px';
+                        card.innerHTML = `
+                            <div class="telemetry-item"><span>User ID</span><span class="value" style="color:#f472b6">${u.telegram_id}</span></div>
+                            <div class="telemetry-item"><span>Mood</span><span class="value" style="color:#f472b6">${u.mood || '-'}</span></div>
+                            <div class="telemetry-item"><span>Energy</span><span class="value" style="color:#f472b6">${u.energy || '-'}/100</span></div>
+                            <div class="telemetry-item"><span>Connection (Kangen)</span><span class="value" style="color:#f472b6">${u.desires?.connection ?? '-'}</span></div>
+                            <div class="telemetry-item"><span>Curiosity (Kepo)</span><span class="value" style="color:#f472b6">${u.desires?.curiosity ?? '-'}</span></div>
+                            <div class="telemetry-item"><span>Autonomy</span><span class="value" style="color:#f472b6">${u.desires?.autonomy ?? '-'}</span></div>
+                        `;
+                        container.appendChild(card);
+                    });
+                }
+
             } catch(e) {
                 console.log("Error fetching telemetry:", e);
             }
@@ -403,6 +470,8 @@
         // Init load
         fetchSettings();
         fetchTelemetry();
+        // Auto refresh telemetry setiap 30 detik
+        setInterval(fetchTelemetry, 30000);
     </script>
 </body>
 </html>
