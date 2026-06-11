@@ -90,3 +90,34 @@ export async function saveSoulState(userId, state) {
         console.error("Redis Save Soul State Error:", e);
     }
 }
+
+/**
+ * Mengambil Goal/Agenda aktif (Misi Volatil)
+ */
+export async function getActiveGoal(userId) {
+    const key = `user:${userId}:active_goal`;
+    try {
+        const goalStr = await redis.get(key);
+        return goalStr || null;
+    } catch (e) {
+        console.error("Redis Get Active Goal Error:", e);
+        return null;
+    }
+}
+
+/**
+ * Menyimpan Goal/Agenda aktif
+ * Jika goal == null, maka menghapus goal yang ada.
+ */
+export async function setActiveGoal(userId, goal) {
+    const key = `user:${userId}:active_goal`;
+    try {
+        if (!goal) {
+            await redis.del(key);
+        } else {
+            await redis.set(key, goal);
+        }
+    } catch (e) {
+        console.error("Redis Set Active Goal Error:", e);
+    }
+}

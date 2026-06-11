@@ -1,7 +1,7 @@
 import { json, optionsResponse, readJson, vercelHandler } from "../src/http.mjs";
 import { createClient } from "@supabase/supabase-js";
 import { AI_TOOLS, executeTool, analyzeImage } from "../src/skills/index.mjs";
-import { getWorkingMemory, saveWorkingMemory, getSoulState, saveSoulState } from "../src/memory/working.mjs";
+import { getWorkingMemory, saveWorkingMemory, getSoulState, saveSoulState, getActiveGoal } from "../src/memory/working.mjs";
 import { getSemanticMemory } from "../src/memory/semantic.mjs";
 import { parseUserMessage } from "../src/perception/parser.mjs";
 import { calculateSoulState } from "../src/soul/engine.mjs";
@@ -325,13 +325,15 @@ async function processMessage(body) {
 
         // --- CONTEXT BUILDER ---
         const relationship = userData.relationship || null;
+        const activeGoal = await getActiveGoal(userId);
         const systemPrompt = buildContext({ 
             persona, 
             currentTime, 
             userTimezone, 
             relationship, 
             memoryString, 
-            soulState: newState 
+            soulState: newState,
+            activeGoal
         });
 
         // 3. Panggil AI (Qwen with Mistral Fallback)
