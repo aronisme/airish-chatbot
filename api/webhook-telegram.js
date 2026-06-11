@@ -262,6 +262,9 @@ async function processMessage(body) {
             embodiment: embodiment
         });
 
+        // Simpan system prompt terakhir ke Redis untuk debugging/dashboard
+        await redis.set(`user:${userId}:last_system_prompt`, systemPrompt, { ex: 86400 });
+
         // 3. Panggil AI (Qwen with Mistral Fallback)
         const aiRes = await queryLLMWithFallback(systemPrompt, history || [], text, null, false, logEvent);
         const choice = aiRes.choices?.[0];

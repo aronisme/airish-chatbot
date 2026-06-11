@@ -457,6 +457,12 @@
                             <div class="telemetry-item"><span>Connection (Kangen)</span><span class="value" style="color:#f472b6">${u.desires?.connection ?? '-'}</span></div>
                             <div class="telemetry-item"><span>Curiosity (Kepo)</span><span class="value" style="color:#f472b6">${u.desires?.curiosity ?? '-'}</span></div>
                             <div class="telemetry-item"><span>Autonomy</span><span class="value" style="color:#f472b6">${u.desires?.autonomy ?? '-'}</span></div>
+                            <div style="margin-top: 15px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 10px;">
+                                <details style="cursor: pointer; font-size: 0.85rem; color: var(--text-muted);">
+                                    <summary style="font-weight: 600; color: #f472b6; outline: none; margin-bottom: 5px;">📜 Lihat System Prompt Terakhir</summary>
+                                    <pre style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; overflow-x: auto; white-space: pre-wrap; color: #e2e8f0; font-family: monospace; font-size: 0.75rem; margin-top: 5px; max-height: 250px; overflow-y: auto;">${u.last_system_prompt || 'Belum ada chat masuk dari user ini'}</pre>
+                                </details>
+                            </div>
                         `;
                         container.appendChild(card);
                     });

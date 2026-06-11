@@ -39,11 +39,15 @@ async function handler(event) {
         const { data: users } = await supabase.from('users').select('telegram_id').limit(10);
         if (users) {
             for (const user of users) {
-                const stateStr = await redis.get(`user:${user.telegram_id}:soul_state`);
+                const [stateStr, promptStr] = await Promise.all([
+                    redis.get(`user:${user.telegram_id}:soul_state`),
+                    redis.get(`user:${user.telegram_id}:last_system_prompt`)
+                ]);
                 const state = parse(stateStr);
                 if (state) {
                     userStates.push({
                         telegram_id: user.telegram_id,
+                        last_system_prompt: promptStr || null,
                         ...state
                     });
                 }
