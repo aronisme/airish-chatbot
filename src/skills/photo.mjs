@@ -9,7 +9,7 @@ export const photoToolDefinition = {
         parameters: {
             type: "object",
             properties: {
-                image_prompt: { type: "string", description: "Instruksi gambar dalam bahasa Inggris untuk AI Image Generator. Contoh: 'A photorealistic close-up selfie of this person smiling', atau 'A photo of this person\\'s feet wearing new sneakers', atau 'A full body mirror selfie of this person'. Selalu gunakan kata 'this person' agar AI mengenali wajah aslimu." }
+                image_prompt: { type: "string", description: "Instruksi gambar dlm bhs Inggris. WAJIB masukkan Realitas Fisikmu saat ini (outfit, lokasi, waktu). Contoh jika kamu pakai piyama di kasur: 'A photorealistic selfie of this person wearing soft blue pajamas, lying on a bed in a bedroom at night'. SELALU mulai dengan 'this person' agar sistem mengenali wajahmu." }
             },
             required: ["image_prompt"]
         }
