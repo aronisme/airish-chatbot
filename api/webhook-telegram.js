@@ -252,10 +252,15 @@ async function processMessage(body) {
         newState.desires = calculateDesires(currentState.desires || {}, perception, text.length, persona);
         await saveSoulState(userId, newState);
         
-        // Mengambil Embodiment State hasil dari Chronos (Background Job)
         let embodimentStr = await redis.get('soul:embodiment:global');
-        let embodiment = embodimentStr ? (typeof embodimentStr === 'string' ? JSON.parse(embodimentStr) : embodimentStr) : { time_of_day: "Siang", weather: "Cerah", current_activity: "Santai" };
-        
+        let embodiment = { time_of_day: "Siang", weather: "Cerah", current_activity: "Santai" };
+        if (embodimentStr) {
+            try {
+                embodiment = typeof embodimentStr === 'string' ? JSON.parse(embodimentStr) : embodimentStr;
+            } catch (e) {
+                console.error("Failed to parse embodimentStr:", e);
+            }
+        }        
         await logEvent('INFO', 'Soul State Updated', `Mood: ${newState.mood}, Energy: ${newState.energy}, Emotion: ${perception.emotion}`, userId);
 
         // --- CONTEXT BUILDER ---
@@ -286,7 +291,15 @@ async function processMessage(body) {
         if (message?.tool_calls && message.tool_calls.length > 0) {
             const toolCall = message.tool_calls[0];
             const callName = toolCall.function.name;
-            const args = JSON.parse(toolCall.function.arguments);
+            let args;
+            try {
+                args = typeof toolCall.function.arguments === 'string' 
+                            ? JSON.parse(toolCall.function.arguments) 
+                            : toolCall.function.arguments;
+            } catch(e) {
+                console.error("Failed to parse tool arguments:", e);
+                args = {};
+            }
             
             await logEvent('INFO', 'AI Tool Triggered', `Memanggil Tool: ${callName}`, userId);
             
