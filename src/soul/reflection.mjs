@@ -18,9 +18,9 @@ ATURAN KRITIS (BACA BAIK-BAIK):
 
 Output harus format JSON murni:
 {
-  "new_facts": ["fakta 1", "fakta 2"], // Fakta permanen (contoh: Punya anjing bernama Budi)
+  "new_facts": ["fakta 1", "fakta 2"], // Fakta STATIS/PERMANEN (contoh: Punya anjing bernama Budi, Punya motor). JANGAN masukkan masalah sementara.
   "new_events": [
-     {"event": "User bercerita dia baru putus cinta hari ini", "emotion": "sad"} // Kejadian spesifik yang dialami user
+     {"event": "User sedang kesal karena ban motornya bocor hari ini", "emotion": "sad"} // Kejadian DINAMIS/SEMENTARA atau insiden spesifik.
   ]
 }
 Jika tidak ada informasi yang penting untuk diingat tentang USER, kembalikan array kosong []. Jangan berikan markdown block.`;
