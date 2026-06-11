@@ -53,9 +53,11 @@ export async function executePhotoTool(args, context, services) {
             await saveWorkingMemory(userId, 'assistant', memoryText);
         } else {
             await sendTelegram('sendMessage', { chat_id: chatId, text: "Aduh, koneksi ke Telegram putus saat mengirim foto." });
+            await saveWorkingMemory(userId, 'assistant', "[Aku sudah mencoba mengirim foto tapi gagal karena koneksi putus. Jangan coba kirim foto lagi kecuali diminta.]");
         }
     } catch (error) {
         await logEvent('ERROR', 'Generate Selfie Error', error.message, userId);
         await sendTelegram('sendMessage', { chat_id: chatId, text: "Aduh, kamera aku lagi error nih." });
+        await saveWorkingMemory(userId, 'assistant', "[Aku sudah mencoba mengirim foto tapi kamera/AI gambar sedang error. Jangan coba kirim foto lagi kecuali user meminta ulang.]");
     }
 }
