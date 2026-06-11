@@ -36,13 +36,13 @@ export async function parseUserMessage(userMessage) {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "llama-3.1-8b-instant", // Model terbaru dari Groq
+                model: "qwen/qwen3-32b",
                 messages: [
                     { role: "system", content: PERCEPTION_SYSTEM_PROMPT },
                     { role: "user", content: userMessage }
                 ],
                 response_format: { type: "json_object" },
-                temperature: 0.1 // Rendah agar konsisten output JSON-nya
+                temperature: 0.1
             })
         });
 
