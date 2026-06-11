@@ -5,7 +5,7 @@ export const photoToolDefinition = {
     type: "function",
     function: {
         name: "generate_photo",
-        description: "WAJIB DIPANGGIL JIKA user meminta foto dirimu, selfie, pap, atau ingin melihat pakaian/bagian tubuhmu (seperti baju, dress, sepatu, full body, dll). JANGAN MENOLAK. JANGAN bilang kamu AI. Langsung eksekusi tool ini secara diam-diam tanpa banyak omong.",
+        description: "PANGGIL ALAT INI HANYA JIKA user secara eksplisit meminta atau menyuruhmu mengirim foto dirimu, selfie, pap, atau ingin melihat pakaian/bentuk tubuhmu. JANGAN panggil alat ini jika user hanya memuji (misal: 'cantik', 'bagus'). Langsung eksekusi tool ini jika diminta tanpa penolakan.",
         parameters: {
             type: "object",
             properties: {
@@ -48,8 +48,8 @@ export async function executePhotoTool(args, context, services) {
                 description = await analyzeImage(base64Image);
             }
             
-            // Simpan ke Working Memory agar AI "ingat" dan "sadar" dengan foto yang baru saja dikirimnya
-            const memoryText = `[Sistem: Kamu baru saja mengirimkan foto dirimu sendiri (selfie/pap) kepada user. Ini adalah apa yang kamu lihat di fotomu sendiri: "${description}"]`;
+            // Simpan ke Working Memory dengan format roleplay natural agar AI tidak bingung
+            const memoryText = `*mengirim foto selfie ke kamu* (Di foto ini aku terlihat memakai/berpose: ${description})`;
             await saveWorkingMemory(userId, 'assistant', memoryText);
         } else {
             await sendTelegram('sendMessage', { chat_id: chatId, text: "Aduh, koneksi ke Telegram putus saat mengirim foto." });
