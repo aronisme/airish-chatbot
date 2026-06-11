@@ -21,7 +21,8 @@ Output harus format JSON murni:
   "new_facts": ["fakta 1", "fakta 2"], // Fakta STATIS/PERMANEN (contoh: Punya anjing bernama Budi, Punya motor). JANGAN masukkan masalah sementara.
   "new_events": [
      {"event": "User sedang kesal karena ban motornya bocor hari ini", "emotion": "sad"} // Kejadian DINAMIS/SEMENTARA atau insiden spesifik.
-  ]
+  ],
+  "obsolete_fact_ids": [15, 23] // Jika ada [ID] fakta di daftar sebelumnya yang sudah TIDAK BENAR/KADALUARSA (misal: "Ban bocor" padahal user bilang sudah diperbaiki).
 }
 Jika tidak ada informasi yang penting untuk diingat tentang USER, kembalikan array kosong []. Jangan berikan markdown block.`;
 
@@ -35,9 +36,9 @@ export async function runReflectionEngine(supabase, userId, workingMemory) {
     
     try {
         // Ambil memori lama agar AI tahu apa yang sudah tersimpan
-        const { data: existingMemories } = await supabase.from('memories').select('fact').eq('telegram_id', userId);
+        const { data: existingMemories } = await supabase.from('memories').select('id, fact').eq('telegram_id', userId);
         const existingFactsStr = existingMemories && existingMemories.length > 0 
-            ? existingMemories.map(m => `- ${m.fact}`).join('\n') 
+            ? existingMemories.map(m => `[ID: ${m.id}] ${m.fact}`).join('\n') 
             : "Belum ada fakta yang tersimpan.";
 
         // Ambil 5 pesan terakhir untuk direnungkan
@@ -90,7 +91,14 @@ ATURAN KRITIS: JANGAN PERNAH memasukkan ulang fakta yang maknanya sama persis at
             }
         }
 
-        console.log(`[REFLECTION] Selesai merenungkan. ${content.new_facts?.length || 0} fakta baru, ${content.new_events?.length || 0} kejadian baru.`);
+        // 3. Hapus fakta yang sudah kadaluarsa (Memory Pruning)
+        if (content.obsolete_fact_ids && content.obsolete_fact_ids.length > 0) {
+            for (const id of content.obsolete_fact_ids) {
+                await supabase.from('memories').delete().eq('id', id);
+            }
+        }
+
+        console.log(`[REFLECTION] Selesai merenungkan. ${content.new_facts?.length || 0} fakta baru, ${content.new_events?.length || 0} kejadian baru, ${content.obsolete_fact_ids?.length || 0} fakta dihapus.`);
     } catch (e) {
         console.error("Reflection Engine Exception:", e);
     }
