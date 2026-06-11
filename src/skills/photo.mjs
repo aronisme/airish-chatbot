@@ -48,8 +48,8 @@ export async function executePhotoTool(args, context, services) {
                 description = await analyzeImage(base64Image);
             }
             
-            // Simpan ke Working Memory dengan format roleplay natural agar AI tidak bingung
-            const memoryText = `*mengirim foto selfie ke kamu* (Di foto ini aku terlihat memakai/berpose: ${description})`;
+            // Simpan ke Working Memory dengan format first-person + catatan visual agar AI tidak salah paham
+            const memoryText = `Ini fotoku yang baru saja aku kirimkan untukmu! [Catatan visual foto: Di foto ini aku terlihat ${description}]`;
             await saveWorkingMemory(userId, 'assistant', memoryText);
         } else {
             await sendTelegram('sendMessage', { chat_id: chatId, text: "Aduh, koneksi ke Telegram putus saat mengirim foto." });
