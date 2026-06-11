@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GAS Testing Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0f111a;
+            --bg-card: #1a1d27;
+            --primary: #4ade80;
+            --primary-hover: #22c55e;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --outgoing: #3b82f6;
+            --incoming: #a855f7;
+            --danger: #ef4444;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg-main); color: var(--text-main); padding: 2rem; }
+        h1 { font-weight: 800; font-size: 2rem; margin-bottom: 0.5rem; letter-spacing: -0.5px; }
+        p.subtitle { color: var(--text-muted); margin-bottom: 2rem; font-size: 0.95rem; }
+        
+        .container { display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem; max-width: 1400px; margin: 0 auto; }
+        @media(max-width: 900px) { .container { grid-template-columns: 1fr; } }
+        
+        .card { background: var(--bg-card); border-radius: 16px; padding: 1.5rem; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; }
+        
+        label { display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        input, textarea { width: 100%; background: #0b0c10; border: 1px solid var(--border); color: var(--text-main); padding: 0.85rem; border-radius: 8px; margin-bottom: 1.25rem; font-size: 0.95rem; transition: 0.2s; }
+        input:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.2); }
+        textarea { height: 180px; font-family: 'Courier New', Courier, monospace; resize: vertical; }
+        
+        button { background: var(--primary); color: #000; font-weight: 800; font-size: 0.95rem; border: none; padding: 0.85rem 1.5rem; border-radius: 8px; cursor: pointer; transition: 0.2s; width: 100%; }
+        button:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        button:active { transform: translateY(1px); }
+        
+        button.danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); width: auto; font-weight: 600; padding: 0.5rem 1rem; }
+        button.danger:hover { background: rgba(239, 68, 68, 0.1); }
+        button.refresh { background: #334155; color: white; width: auto; font-weight: 600; padding: 0.5rem 1rem; }
+        button.refresh:hover { background: #475569; }
+        
+        .flex-between { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        
+        .log-list { display: flex; flex-direction: column; gap: 1rem; height: 600px; overflow-y: auto; padding-right: 0.5rem; }
+        .log-list::-webkit-scrollbar { width: 8px; }
+        .log-list::-webkit-scrollbar-track { background: transparent; }
+        .log-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        
+        .log-item { background: #0b0c10; border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; transition: 0.2s; }
+        .log-item:hover { border-color: #475569; }
+        .log-item.incoming { border-left: 4px solid var(--incoming); }
+        .log-item.outgoing { border-left: 4px solid var(--outgoing); }
+        .log-item.outgoing_error { border-left: 4px solid var(--danger); }
+        
+        .badge { font-size: 0.7rem; padding: 0.25rem 0.6rem; border-radius: 999px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge.incoming { background: rgba(168, 85, 247, 0.15); color: #d8b4fe; }
+        .badge.outgoing { background: rgba(59, 130, 246, 0.15); color: #93c5fd; }
+        .badge.outgoing_error { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
+        
+        .log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+        .timestamp { font-size: 0.75rem; color: var(--text-muted); }
+        
+        pre { background: #1a1d27; padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; color: #a5b4fc; border: 1px solid var(--border); white-space: pre-wrap; word-wrap: break-word; }
+        
+        .toast { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: #000; padding: 1rem 1.5rem; border-radius: 8px; font-weight: bold; transform: translateY(100px); opacity: 0; transition: 0.3s; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.error { background: var(--danger); color: white; }
+    </style>
+</head>
+<body>
+
+    <div>
+        <h1>☁️ GAS Testing Dashboard</h1>
+        <p class="subtitle">Kirim dan terima HTTP Request dari Google Apps Script (Webhook). Endpoint webhook Anda: <strong style="color:var(--primary)" id="webhook-url">...</strong></p>
+    </div>
+
+    <div class="container">
+        <!-- Panel Kirim -->
+        <div class="card">
+            <h2>Kirim Request ke GAS</h2>
+            <form id="sendForm">
+                <label>URL Endpoint GAS (Target URL)</label>
+                <input type="url" id="targetUrl" placeholder="https://script.google.com/macros/s/AKfycby.../exec" required>
+                
+                <label>Payload JSON (Body)</label>
+                <textarea id="payload" placeholder='{"pesan": "Halo dari Airish!"}'></textarea>
+                
+                <button type="submit" id="btnSend">🚀 Kirim Request (POST)</button>
+            </form>
+        </div>
+
+        <!-- Panel Log -->
+        <div class="card">
+            <div class="flex-between">
+                <h2>Traffic Monitor</h2>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="refresh" onclick="fetchLogs()">🔄 Refresh</button>
+                    <button class="danger" onclick="clearLogs()">🗑️ Clear</button>
+                </div>
+            </div>
+            
+            <div class="log-list" id="logList">
+                <p style="color: var(--text-muted); text-align: center; margin-top: 2rem;">Loading logs...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">Berhasil!</div>
+
+    <script>
+        const API_URL = '/api/gas';
+        document.getElementById('webhook-url').innerText = window.location.origin + API_URL;
+
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.className = isError ? 'toast error show' : 'toast show';
+            setTimeout(() => { t.classList.remove('show'); }, 3000);
+        }
+
+        async function fetchLogs() {
+            try {
+                const res = await fetch(API_URL);
+                const logs = await res.json();
+                
+                const list = document.getElementById('logList');
+                list.innerHTML = '';
+                
+                if (logs.length === 0) {
+                    list.innerHTML = '<p style="color: var(--text-muted); text-align: center; margin-top: 2rem;">Belum ada trafik.</p>';
+                    return;
+                }
+
+                logs.forEach(log => {
+                    const div = document.createElement('div');
+                    div.className = `log-item ${log.type}`;
+                    
+                    const date = new Date(log.timestamp).toLocaleString('id-ID');
+                    let contentHTML = '';
+
+                    if (log.type === 'incoming') {
+                        contentHTML = `
+                            <p style="margin-bottom: 0.5rem; font-size: 0.85rem; color: #cbd5e1;"><strong>Dari:</strong> Webhook / GAS</p>
+                            <pre>${JSON.stringify(log.body || log.query, null, 2)}</pre>
+                        `;
+                    } else if (log.type === 'outgoing') {
+                        contentHTML = `
+                            <p style="margin-bottom: 0.5rem; font-size: 0.85rem; color: #cbd5e1;"><strong>Ke:</strong> ${log.target}</p>
+                            <p style="margin-bottom: 0.5rem; font-size: 0.85rem; color: #cbd5e1;"><strong>Status Respon:</strong> ${log.responseStatus}</p>
+                            <div style="margin-bottom:0.5rem;"><strong>Payload Dikirim:</strong><pre style="margin-bottom:0.5rem;">${JSON.stringify(log.payload, null, 2)}</pre></div>
+                            <div><strong>Respon GAS:</strong><pre>${log.responseBody}</pre></div>
+                        `;
+                    } else {
+                        contentHTML = `
+                            <p style="margin-bottom: 0.5rem; font-size: 0.85rem; color: #cbd5e1;"><strong>Ke:</strong> ${log.target}</p>
+                            <p style="color: #ef4444; font-weight: bold; margin-bottom: 0.5rem;">Error: ${log.error}</p>
+                            <pre>${JSON.stringify(log.payload, null, 2)}</pre>
+                        `;
+                    }
+
+                    div.innerHTML = `
+                        <div class="log-header">
+                            <span class="badge ${log.type}">${log.type.replace('_', ' ')}</span>
+                            <span class="timestamp">${date}</span>
+                        </div>
+                        ${contentHTML}
+                    `;
+                    list.appendChild(div);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function clearLogs() {
+            if(!confirm('Hapus semua log?')) return;
+            try {
+                await fetch(API_URL, { method: 'DELETE' });
+                fetchLogs();
+                showToast('Logs dibersihkan!');
+            } catch (err) {
+                showToast('Gagal menghapus logs', true);
+            }
+        }
+
+        document.getElementById('sendForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSend');
+            const originalText = btn.innerText;
+            
+            try {
+                btn.innerText = 'Mengirim...';
+                btn.disabled = true;
+
+                const targetUrl = document.getElementById('targetUrl').value;
+                const payloadRaw = document.getElementById('payload').value;
+                
+                let payload = {};
+                if (payloadRaw.trim()) {
+                    try { payload = JSON.parse(payloadRaw); }
+                    catch(e) { throw new Error('Format JSON pada Payload tidak valid!'); }
+                }
+
+                const res = await fetch(API_URL + '?action=send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'send', targetUrl, payload })
+                });
+
+                const data = await res.json();
+                
+                if (res.ok) {
+                    showToast('Request berhasil terkirim!');
+                    document.getElementById('payload').value = '';
+                } else {
+                    throw new Error(data.error || 'Server error');
+                }
+            } catch (err) {
+                showToast(err.message, true);
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+                fetchLogs();
+            }
+        });
+
+        // Init
+        fetchLogs();
+        // Auto refresh every 5 seconds
+        setInterval(fetchLogs, 5000);
+    </script>
+</body>
+</html>
