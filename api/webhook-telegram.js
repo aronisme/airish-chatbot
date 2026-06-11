@@ -89,16 +89,16 @@ async function sendTelegramPhotoBuffer(chatId, buffer) {
 
 // AI_TOOLS dipindahkan ke src/skills/index.mjs
 
-// --- GROQ AI ---
-const groqKeys = (process.env.GROQ_KEYS || "").split(',').map(k => k.trim()).filter(Boolean);
-function getRandomGroqKey() {
-    if (groqKeys.length === 0) return "";
-    return groqKeys[Math.floor(Math.random() * groqKeys.length)];
+// --- MISTRAL AI ---
+const mistralKeys = (process.env.MISTRAL_KEYS || "").split(',').map(k => k.trim()).filter(Boolean);
+function getRandomMistralKey() {
+    if (mistralKeys.length === 0) return "";
+    return mistralKeys[Math.floor(Math.random() * mistralKeys.length)];
 }
 
-async function queryGroq(systemPrompt, history, userMessage, toolResponseMessages = null) {
-    const url = "https://api.groq.com/openai/v1/chat/completions";
-    const apiKey = getRandomGroqKey();
+async function queryMistral(systemPrompt, history, userMessage, toolResponseMessages = null) {
+    const url = "https://api.mistral.ai/v1/chat/completions";
+    const apiKey = getRandomMistralKey();
 
     let messages = toolResponseMessages;
     if (!messages) {
@@ -116,7 +116,7 @@ async function queryGroq(systemPrompt, history, userMessage, toolResponseMessage
     if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
 
     const body = {
-        model: "openai/gpt-oss-120b",
+        model: "mistral-large-latest",
         messages,
     };
     if (!toolResponseMessages) {
@@ -125,7 +125,7 @@ async function queryGroq(systemPrompt, history, userMessage, toolResponseMessage
     }
 
     const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
-    if (!response.ok) throw new Error(`Groq Error: ${response.status} - ${await response.text()}`);
+    if (!response.ok) throw new Error(`Mistral Error: ${response.status} - ${await response.text()}`);
     return response.json();
 }
 
@@ -169,10 +169,10 @@ async function queryQwen(systemPrompt, history, userMessage, toolResponseMessage
 // --- AI FALLBACK SYSTEM ---
 async function queryLLMWithFallback(systemPrompt, history, userMessage, toolResponseMessages = null) {
     try {
-        await logEvent('INFO', 'AI Request', `Mengirim request ke Groq LLaMA.`);
-        return await queryGroq(systemPrompt, history, userMessage, toolResponseMessages);
+        await logEvent('INFO', 'AI Request', `Mengirim request ke Mistral Large.`);
+        return await queryMistral(systemPrompt, history, userMessage, toolResponseMessages);
     } catch (error) {
-        await logEvent('WARN', 'Groq Failed, Fallback to Qwen', error.message);
+        await logEvent('WARN', 'Mistral Failed, Fallback to Qwen', error.message);
         return await queryQwen(systemPrompt, history, userMessage, toolResponseMessages);
     }
 }
