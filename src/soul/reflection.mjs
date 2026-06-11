@@ -1,7 +1,11 @@
 // src/soul/reflection.mjs
 import { saveEpisodicMemory } from "../memory/episodic.mjs";
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
+function getRandomGroqKey() {
+    const groqKeys = (process.env.GROQ_KEYS || "").split(',').map(k => k.trim()).filter(Boolean);
+    if (groqKeys.length === 0) return "";
+    return groqKeys[Math.floor(Math.random() * groqKeys.length)];
+}
 
 const REFLECTION_PROMPT = `Kamu adalah mesin introspeksi psikologis. 
 Tugasmu menganalisis transkrip percakapan ini dan mengekstrak JIKA ada fakta penting baru atau kejadian spesifik tentang user.
@@ -19,7 +23,8 @@ Jika tidak ada informasi yang penting untuk diingat, kembalikan array kosong [].
  * Membaca percakapan terakhir dan menyimpannya sebagai memori jangka panjang (Semantic/Episodic).
  */
 export async function runReflectionEngine(supabase, userId, workingMemory) {
-    if (!GROQ_API_KEY || workingMemory.length < 2) return;
+    const apiKey = getRandomGroqKey();
+    if (!apiKey || workingMemory.length < 2) return;
     
     try {
         // Ambil 5 pesan terakhir untuk direnungkan
@@ -29,11 +34,11 @@ export async function runReflectionEngine(supabase, userId, workingMemory) {
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${GROQ_API_KEY}`,
+                "Authorization": `Bearer ${apiKey}`,
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "llama-3.1-8b-instant", // Model terbaru dari Groq
+                model: "qwen/qwen3-32b", // Pakai model Qwen 32B untuk akurasi ekstraksi memori
                 messages: [
                     { role: "system", content: REFLECTION_PROMPT },
                     { role: "user", content: conversationString }
