@@ -9,7 +9,7 @@ export const photoToolDefinition = {
         parameters: {
             type: "object",
             properties: {
-                image_prompt: { type: "string", description: "Instruksi gambar dlm bhs Inggris. ATURAN: 1. Jika user meminta outfit/lokasi/pose tertentu (misal: 'pakai dress', 'di kamar mandi'), WAJIB turuti permintaan user tersebut. 2. JIKA user TIDAK meminta spesifik (hanya bilang 'PAP', 'fotoin dong'), barulah gunakan Realitas Fisikmu saat ini (contoh: 'wearing soft blue pajamas in bed'). SELALU mulai dengan 'this person' agar sistem mengenali wajahmu." }
+                image_prompt: { type: "string", description: "Instruksi gambar dlm bhs Inggris. ATURAN: 1. Jika user meminta outfit/pose spesifik, WAJIB turuti. 2. Jika tidak spesifik, gunakan Realitas Fisikmu saat ini (contoh: 'wearing blue pajamas in bed'). 3. WAJIB tambahkan deskripsi ekspresi wajah yang MENCERMINKAN Mood dan Energimu saat ini (misal jika mood 'sad' = 'sad expression, teary eyes', jika 'tired' = 'exhausted, sleepy face', jika 'angry' = 'annoyed expression'). SELALU mulai dengan kata 'this person'." }
             },
             required: ["image_prompt"]
         }
