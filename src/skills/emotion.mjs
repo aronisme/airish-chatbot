@@ -65,7 +65,12 @@ export async function executeHoldEmotionTool(args, context, services) {
     
     // Ambil bagasi saat ini
     const baggageStr = await redis.get(`user:${userId}:baggage`);
-    let baggage = typeof baggageStr === 'string' ? JSON.parse(baggageStr) : (baggageStr || []);
+    let baggage = [];
+    if (typeof baggageStr === 'string') {
+        try { baggage = JSON.parse(baggageStr.replace(/,\s*]/g, ']')); } catch(e) {}
+    } else {
+        baggage = baggageStr || [];
+    }
     
     // Tambah luka baru (ID unik 6 karakter)
     const newWound = {
@@ -95,7 +100,12 @@ export async function executeReleaseEmotionTool(args, context, services) {
     const { sendTelegram } = services;
     
     const baggageStr = await redis.get(`user:${userId}:baggage`);
-    let baggage = typeof baggageStr === 'string' ? JSON.parse(baggageStr) : (baggageStr || []);
+    let baggage = [];
+    if (typeof baggageStr === 'string') {
+        try { baggage = JSON.parse(baggageStr.replace(/,\s*]/g, ']')); } catch(e) {}
+    } else {
+        baggage = baggageStr || [];
+    }
     
     const initialLen = baggage.length;
     baggage = baggage.filter(b => b.id !== emotion_id);

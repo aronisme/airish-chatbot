@@ -271,7 +271,19 @@ async function processMessage(body) {
         await logEvent('INFO', 'Soul State Updated', `Mood: ${newState.mood}, Energy: ${newState.energy}, Emotion: ${perception.emotion}`, userId);
 
         const baggageStr = await redis.get(`user:${userId}:baggage`);
-        const emotionalBaggage = typeof baggageStr === 'string' ? JSON.parse(baggageStr) : (baggageStr || []);
+        let emotionalBaggage = [];
+        if (typeof baggageStr === 'string') {
+            try {
+                // Hapus trailing comma yang bisa menyebabkan invalid JSON
+                const cleanStr = baggageStr.replace(/,\s*]/g, ']');
+                emotionalBaggage = JSON.parse(cleanStr);
+            } catch(e) {
+                console.error("Failed to parse emotional baggage:", e);
+                emotionalBaggage = [];
+            }
+        } else {
+            emotionalBaggage = baggageStr || [];
+        }
 
         // --- CONTEXT BUILDER ---
         const relationship = userData.relationship || null;
