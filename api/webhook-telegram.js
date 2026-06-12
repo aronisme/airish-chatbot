@@ -246,10 +246,10 @@ async function processMessage(body) {
         // --- SOUL ENGINE PROCESSING (Perception & State) ---
         const currentState = await getSoulState(userId);
         const perception = await parseUserMessage(text);
-        const newState = calculateSoulState(currentState, perception);
+        const newState = calculateSoulState(currentState, perception, DEFAULT_IDENTITY);
         
         // Menghitung Desire (Motivasi Intrinsik)
-        newState.desires = calculateDesires(currentState.desires || {}, perception, text.length, persona);
+        newState.desires = calculateDesires(currentState.desires || {}, perception, text.length, persona, DEFAULT_IDENTITY);
         await saveSoulState(userId, newState);
         
         let embodimentStr = await redis.get('soul:embodiment:global');

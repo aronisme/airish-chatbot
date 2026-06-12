@@ -1,22 +1,33 @@
 // src/soul/desire.mjs
 
-export function calculateDesires(currentDesires = {}, perception, textLength = 0, personaSettings = {}) {
-    let connection = currentDesires.connection !== undefined ? currentDesires.connection : 0.5;
-    let curiosity = currentDesires.curiosity !== undefined ? currentDesires.curiosity : 0.2;
-    let autonomy = currentDesires.autonomy !== undefined ? currentDesires.autonomy : 0.5;
-
+export function calculateDesires(currentDesires = {}, perception, textLength = 0, personaSettings = {}, identity = {}) {
     // Ambil baseline dari setting (default 5 / 10 = 0.5)
     const baseConnection = (personaSettings.clinginess !== undefined ? personaSettings.clinginess : 8) / 10;
     const baseCuriosity = (personaSettings.curiosity !== undefined ? personaSettings.curiosity : 6) / 10;
     const baseAutonomy = 0.5; // Autonomy tetap 0.5
+
+    let connection = currentDesires.connection !== undefined ? currentDesires.connection : baseConnection;
+    let curiosity = currentDesires.curiosity !== undefined ? currentDesires.curiosity : baseCuriosity;
+    let autonomy = currentDesires.autonomy !== undefined ? currentDesires.autonomy : baseAutonomy;
 
     const hostility = perception.hostility || 0.0;
     const engagement = perception.engagement || 'medium';
     const topicShift = perception.topic_shift || false;
 
     // 1. Connection Drive
+    let attachmentStyle = identity?.attachment_style || "secure";
+
     if (hostility > 0.5 || perception.emotion === 'angry' || perception.emotion === 'tired') {
-        connection = Math.max(0.1, connection - 0.4); // Instan drop jika dikasari atau user emosi
+        if (attachmentStyle.includes("anxious")) {
+            // Anxious: Bukannya menjauh, dia malah takut ditinggal
+            connection = Math.max(0.1, connection - 0.1); 
+        } else if (attachmentStyle.includes("avoidant")) {
+            // Avoidant: Langsung memutus koneksi dan cuek parah
+            connection = Math.max(0.1, connection - 0.5);
+        } else {
+            // Secure: Mundur teratur secara sehat
+            connection = Math.max(0.1, connection - 0.3);
+        }
     } else {
         if (perception.intent === 'greeting' || perception.intent === 'personal_question') {
             connection = Math.min(1.0, connection + 0.2);
