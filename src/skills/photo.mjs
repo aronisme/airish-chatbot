@@ -48,9 +48,9 @@ export async function executePhotoTool(args, context, services) {
                 description = await analyzeImage(base64Image);
             }
             
-            // Fix 5: Simpan marker minimal — JANGAN simpan deskripsi visual AI ke WM
-            // karena Reflection Engine akan salah mengekstrak sebagai fakta user
-            await saveWorkingMemory(userId, 'assistant', '[SYSTEM: Airish mengirim foto selfie ke user]');
+            // Fix 5: Simpan deskripsi visual dengan format khusus [Catatan visual: ...]
+            // Format ini otomatis diabaikan oleh Reflection Engine, namun bisa dibaca oleh Mistral di chat history
+            await saveWorkingMemory(userId, 'assistant', `[Catatan visual: Airish mengirim foto selfie. Deskripsi foto: ${description}]`);
         } else {
             await sendTelegram('sendMessage', { chat_id: chatId, text: "Aduh, koneksi ke Telegram putus saat mengirim foto." });
             await saveWorkingMemory(userId, 'assistant', '[SYSTEM: Gagal mengirim foto]');
