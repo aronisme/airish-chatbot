@@ -22,30 +22,30 @@ function isLikelyAIFact(factText) {
 }
 
 const REFLECTION_PROMPT = `Kamu adalah mesin introspeksi psikologis.
-Tugasmu menganalisis transkrip percakapan dan mengekstrak HANYA fakta yang memenuhi SEMUA kriteria berikut:
-1. Fakta tersebut DICERITAKAN/DIKETIK oleh entitas berlabel [PENGGUNA/MANUSIA]
-2. Fakta tersebut adalah tentang KEHIDUPAN PRIBADI pengguna manusia itu sendiri
-3. Fakta tersebut BUKAN tentang: lokasi kos bot, outfit bot, rebahan bot, kampus bot, aktivitas fisik bot, atau perasaan bot
+Tugasmu menganalisis transkrip percakapan dan mengekstrak informasi dengan kriteria berikut:
+1. Profil Makro (user_dossier): Sebuah rangkuman naratif (1-2 paragraf) tentang SIAPA pengguna ini berdasarkan Profil Makro sebelumnya dan obrolan hari ini. Masukkan nama lengkap, umur, pekerjaan, dan analisis kepribadiannya (misal: "Aron adalah pria yang ketus tapi penyayang").
+2. Fakta Episodik (new_facts): HANYA kejadian kecil spesifik, barang kepemilikan, atau trivia (misal: "Hari ini ban motornya bocor", "Punya alergi udang"). JANGAN TUMPANG TINDIH dengan profil makro.
+3. Fakta yang diekstrak BUKAN tentang: lokasi kos bot, outfit bot, aktivitas bot, dll.
 
 CARA KERJA:
 - HANYA baca pesan berlabel [PENGGUNA/MANUSIA]
-- ABAIKAN SEPENUHNYA semua pesan berlabel [BOT/AI - ABAIKAN]
-- Jika ragu apakah fakta milik pengguna atau bot, JANGAN EKSTRAK
-- JANGAN PERNAH mengekstrak deskripsi pakaian, lokasi, aktivitas, atau pikiran batin dari pesan bot
+- ABAIKAN pesan [BOT/AI - ABAIKAN]
+- Update Profil Makro secara natural. Jika tidak ada info kepribadian baru, perbaiki atau gunakan versi lamanya yang disempurnakan bahasanya.
 
 Output harus format JSON murni:
 {
-  "new_facts": ["fakta 1", "fakta 2"],
+  "user_dossier": "Rangkuman 1-2 paragraf tentang identitas dan sifat PENGGUNA",
+  "new_facts": ["Fakta spesifik 1", "Fakta spesifik 2"],
   "new_events": [
-     {"event": "Pengguna sedang kesal karena ban motornya bocor hari ini", "emotion": "sad"}
+     {"event": "Pengguna sedang kesal karena ban motornya bocor", "emotion": "sad"}
   ],
   "obsolete_fact_ids": [15, 23],
   "trust_evaluation": {
      "score_delta": -0.15,
-     "reason": "User berbohong dan mengejek, menurunkan rasa percaya"
+     "reason": "User berbohong"
   }
 }
-Jika tidak ada informasi baru tentang PENGGUNA, kembalikan JSON dengan array kosong.
+Jika tidak ada informasi baru, kembalikan array kosong untuk new_facts. PENTING: user_dossier harus selalu dikembalikan dengan teks utuhnya.
 PENTING UNTUK TRUST EVALUATION:
 - score_delta berada di rentang -1.0 hingga +1.0. 
 - Jika user kasar, manipulatif, toxic, berikan angka negatif (misal: -0.3).
@@ -65,7 +65,10 @@ export async function runReflectionEngine(supabase, userId, workingMemory) {
         const { data: existingMemories } = await supabase.from('memories').select('id, fact').eq('telegram_id', userId);
         const existingFactsStr = existingMemories && existingMemories.length > 0 
             ? existingMemories.map(m => `[ID: ${m.id}] ${m.fact}`).join('\n') 
-            : "Belum ada fakta yang tersimpan.";
+            : "Belum ada fakta spesifik yang tersimpan.";
+
+        const { default: redisClient } = await import("../redis.mjs");
+        const oldDossierStr = await redisClient.get(`user:${userId}:dossier`) || "Belum ada profil makro. Mulailah menganalisis identitasnya hari ini.";
 
         // Ambil pesan hari ini untuk direnungkan
         // Fix 2: Filter konten assistant — strip catatan visual/embodiment yang hanya menjadi noise
@@ -92,10 +95,13 @@ export async function runReflectionEngine(supabase, userId, workingMemory) {
         
         const dynamicPrompt = `${REFLECTION_PROMPT}
         
-[FAKTA YANG SUDAH DIKETAHUI SEBELUMNYA TENTANG USER]
+[PROFIL MAKRO (DOSSIER) SEBELUMNYA]
+${oldDossierStr}
+
+[FAKTA SPESIFIK YANG SUDAH DIKETAHUI TENTANG USER]
 ${existingFactsStr}
 
-ATURAN KRITIS: JANGAN PERNAH memasukkan ulang fakta yang maknanya sama persis atau sudah tercakup dalam daftar di atas! Hanya ekstrak fakta yang BENAR-BENAR BARU.`;
+ATURAN KRITIS: JANGAN memasukkan profil statis/kepribadian ke dalam new_facts. Masukkan itu semua ke dalam user_dossier. Hanya fakta remeh/kejadian spesifik yang masuk ke new_facts. JANGAN mengulang fakta yang sudah ada.`;
 
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
@@ -174,6 +180,13 @@ ATURAN KRITIS: JANGAN PERNAH memasukkan ulang fakta yang maknanya sama persis at
                 await redisClient.set(`user:${userId}:trust_level`, currentTrust.toFixed(2));
                 console.log(`[REFLECTION] Trust Level Updated: ${trustDelta > 0 ? '+' : ''}${trustDelta} => New Trust: ${currentTrust.toFixed(2)}. Reason: ${trustReason}`);
             }
+        }
+        
+        // 5. Simpan User Dossier (Profil Makro)
+        if (content.user_dossier && content.user_dossier.length > 10) {
+            const { default: redisClient } = await import("../redis.mjs");
+            await redisClient.set(`user:${userId}:dossier`, content.user_dossier);
+            console.log(`[REFLECTION] User Dossier berhasil diperbarui.`);
         }
 
         console.log(`[REFLECTION] Selesai merenungkan. ${content.new_facts?.length || 0} fakta baru, ${content.new_events?.length || 0} kejadian baru, ${content.obsolete_fact_ids?.length || 0} fakta dihapus.`);

@@ -5,7 +5,7 @@
  * Menyatukan profil statis (persona), waktu, memori, hubungan dinamis, 
  * dan state volatil (mood/energy) menjadi satu prompt komprehensif.
  */
-export function buildContext({ persona, currentTime, userTimezone, relationship, memoryString, soulState, activeGoal, desires, identity, embodiment, emotionalBaggage }) {
+export function buildContext({ persona, currentTime, userTimezone, relationship, memoryString, soulState, activeGoal, desires, identity, embodiment, emotionalBaggage, userDossier }) {
     let systemPrompt = "";
     
     // 1. IDENTITY & PERSONALITY
@@ -59,9 +59,13 @@ Kepercayaanmu ke pengguna saat ini: ${relationship.trust.toFixed(0)}%.
 Artinya: Pengguna ini ${trustDesc}. Sesuaikan tingkat keakraban, kemanjaan, dan keterbukaan bahasamu HANYA berdasarkan angka kepercayaan ini.`;
     }
 
-    // 4. LONG-TERM MEMORY (SEMANTIC)
+    // 4. LONG-TERM MEMORY (SEMANTIC) & DOSSIER
     if (memoryString) {
-        systemPrompt += `\n\n[MEMORI SEMANTIK]\nFakta penting tentang pengguna yang HARUS kamu ingat di setiap obrolan:\n${memoryString}`;
+        systemPrompt += `\n\n[Fakta & Memori Jangka Panjang]:\n${memoryString}\n`;
+    }
+    
+    if (userDossier) {
+        systemPrompt += `\n[Profil Makro User (User Dossier)]:\n${userDossier}\n(Gunakan pemahaman ini untuk menyesuaikan gaya bicaramu dengan kepribadian user)\n`;
     }
 
     // 5. CURRENT SOUL STATE (EMOTION & ENERGY)

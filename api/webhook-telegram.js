@@ -293,9 +293,12 @@ async function processMessage(body) {
         }
 
         const trustStr = await redis.get(`user:${userId}:trust_level`);
-        let trustValue = 0.3;
-        if (trustStr) trustValue = parseFloat(trustStr);
-        const relationship = { trust: trustValue * 100 }; // Skala 0-100 untuk builder
+        const trust_level = trustStr !== null ? parseFloat(trustStr) : persona.default_trust;
+        
+        // Ambil User Dossier (Profil Makro)
+        const userDossier = await redis.get(`user:${userId}:dossier`) || "";
+
+        const relationship = { trust: (parseFloat(trustStr || 0.3) * 100) };
         const activeGoal = await getActiveGoal(userId);
         const systemPrompt = buildContext({ 
             persona, 
@@ -309,6 +312,7 @@ async function processMessage(body) {
             identity: userIdentity,
             embodiment: embodiment,
             emotionalBaggage: emotionalBaggage,
+            userDossier: userDossier,
             trustLevel: trustStr || 'neutral'
         });
 

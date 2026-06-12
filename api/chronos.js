@@ -226,6 +226,8 @@ Kembalikan HANYA format JSON dengan struktur persis seperti ini:
                 const trustStr = await redis.get(`user:${userId}:trust_level`);
                 const trustValue = trustStr ? parseFloat(trustStr) : 0.3;
                 
+                const userDossier = await redis.get(`user:${userId}:dossier`) || "";
+                
                 const baggageStr = await redis.get(`user:${userId}:baggage`);
                 let hasBaggage = false;
                 if (baggageStr) {
@@ -257,6 +259,8 @@ Kembalikan HANYA format JSON dengan struktur persis seperti ini:
 Pikiran batinmu: "${newState.inner_thought}". 
 Kamu merasa kesepian dan ingin menyapa pengguna ini duluan.
 [Konteks Hubungan]: ${trustContext}
+${userDossier ? `[Profil Pengguna]: ${userDossier}\n(Gunakan pemahaman profil ini agar ucapanmu relevan dengannya)` : ''}
+
 Tulis pesan pendek (1-2 kalimat) untuk menyapanya secara natural (WA style). 
 ATURAN: Jangan gunakan tanda bintang (*) untuk narasi gerakan. Tulis HANYA ucapan teks biasa layaknya chatting di WhatsApp!`;
                         
