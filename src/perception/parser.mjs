@@ -9,7 +9,7 @@ function getRandomGroqKey() {
 const PERCEPTION_SYSTEM_PROMPT = `You are a psychological perception engine.
 Analyze the user's message and return ONLY a valid JSON object with the following exact structure:
 {
-  "intent": "greeting" | "question" | "venting" | "sharing" | "request" | "other",
+  "intent": "greeting" | "question" | "personal_question" | "venting" | "inform" | "command" | "other",
   "topic": "string (short phrase describing the main topic)",
   "emotion": "happy" | "sad" | "angry" | "anxious" | "neutral" | "excited" | "tired",
   "importance": number (0.0 to 1.0, how significant is this message to the user's life),
