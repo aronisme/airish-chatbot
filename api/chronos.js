@@ -262,7 +262,7 @@ Kamu merasa kesepian dan ingin menyapa pengguna ini duluan.
 ${userDossier ? `[Profil Pengguna]: ${userDossier}\n(Gunakan pemahaman profil ini agar ucapanmu relevan dengannya)` : ''}
 
 Tulis pesan pendek (1-2 kalimat) untuk menyapanya secara natural (WA style). 
-ATURAN: Jangan gunakan tanda bintang (*) untuk narasi gerakan. Tulis HANYA ucapan teks biasa layaknya chatting di WhatsApp!`;
+ATURAN MUTLAK: Tulis RAW text saja. DILARANG KERAS menggunakan tanda kutip ("..."), tanda bintang (*) untuk bold/italic/narasi gerakan, atau formatting markdown apapun. Hanya ketik kata-kata layaknya chatting di WhatsApp sungguhan!`;
                         
                         try {
                             const proRes = await queryLLMWithFallback(proPrompt, [], "");
