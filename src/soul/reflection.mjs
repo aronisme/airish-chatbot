@@ -23,18 +23,18 @@ function isLikelyAIFact(factText) {
 
 const REFLECTION_PROMPT = `Kamu adalah mesin introspeksi psikologis.
 Tugasmu menganalisis transkrip percakapan dan mengekstrak informasi dengan kriteria berikut:
-1. Profil Makro (user_dossier): Sebuah rangkuman naratif (1-2 paragraf) tentang SIAPA pengguna ini berdasarkan Profil Makro sebelumnya dan obrolan hari ini. Masukkan nama lengkap, umur, pekerjaan, dan analisis kepribadiannya (misal: "Aron adalah pria yang ketus tapi penyayang").
+1. Profil Makro (user_dossier): Sebuah rangkuman naratif (MAKSIMAL 3-4 KALIMAT PADAT) tentang SIAPA pengguna ini berdasarkan Profil Makro sebelumnya dan obrolan hari ini. Masukkan nama lengkap, umur, pekerjaan, dan analisis kepribadiannya (misal: "Aron adalah pria yang ketus tapi penyayang"). JANGAN PERNAH LEBIH DARI 4 KALIMAT.
 2. Fakta Episodik (new_facts): HANYA kejadian kecil spesifik, barang kepemilikan, atau trivia (misal: "Hari ini ban motornya bocor", "Punya alergi udang"). JANGAN TUMPANG TINDIH dengan profil makro.
 3. Fakta yang diekstrak BUKAN tentang: lokasi kos bot, outfit bot, aktivitas bot, dll.
 
 CARA KERJA:
 - HANYA baca pesan berlabel [PENGGUNA/MANUSIA]
 - ABAIKAN pesan [BOT/AI - ABAIKAN]
-- Update Profil Makro secara natural. Jika tidak ada info kepribadian baru, perbaiki atau gunakan versi lamanya yang disempurnakan bahasanya.
+- Update Profil Makro secara natural. Jika tidak ada info kepribadian baru, perbaiki atau gunakan versi lamanya yang disempurnakan bahasanya secara singkat.
 
 Output harus format JSON murni:
 {
-  "user_dossier": "Rangkuman 1-2 paragraf tentang identitas dan sifat PENGGUNA",
+  "user_dossier": "Rangkuman maksimal 3-4 kalimat padat tentang identitas dan sifat PENGGUNA",
   "new_facts": ["Fakta spesifik 1", "Fakta spesifik 2"],
   "new_events": [
      {"event": "Pengguna sedang kesal karena ban motornya bocor", "emotion": "sad"}
