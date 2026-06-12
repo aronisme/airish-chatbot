@@ -164,19 +164,22 @@ Kembalikan HANYA dalam format JSON dengan key: "agenda" (string singkat), "outfi
         }
     } else {
         console.log("[CHRONOS] Running 15-Min Pulse (Inner Monologue)...");
+        const activeContext = await redis.get('soul:chronos:active_context');
+        
     const pulsePrompt = `Namamu: ${settings.personaName || 'Airish'}. Sifat: ${settings.personaArchetype || 'Ceria'}. Pekerjaan: ${settings.personaCraft || 'Mahasiswi'}.
 Lokasi rumah: ${settings.homeCity}. Waktu saat ini: ${timeStr} (${timeOfDay}). Cuaca: ${weather}.
 Agenda hari ini: ${agenda.agenda}. Pakaian yang terakhir kamu kenakan: ${lastState.outfit || agenda.outfit}.
 Beberapa saat yang lalu kamu sedang: "${lastState.current_activity || 'Tidur'}".
-
-Tugasmu: Tentukan apa yang sedang kamu lakukan TEPAT DETIK INI. Sesuaikan aktivitasmu dengan AGENDA hari ini pada jam ini. Jika ini waktunya tidur, maka kamu harus sedang tidur di kasur dan memakai piyama. Jangan terpaku pada aktivitas masa lalu jika waktunya sudah berganti!
-Di mana lokasi spesifikmu? Apa pakaian (outfit) yang kamu pakai saat ini? (Ganti bajumu jika waktunya berganti, misal pakai piyama malam hari). Dan apa yang sedang kamu pikirkan (inner thought) di dalam hati sesuai SIFATMU?
+${activeContext ? `\nSTATUS REAL-TIME SAAT INI: Kamu ${activeContext}.\n` : ''}
+Tugasmu: Tentukan apa yang sedang kamu lakukan TEPAT DETIK INI. Sesuaikan aktivitasmu dengan AGENDA hari ini pada jam ini. Jika ini waktunya tidur, maka kamu harus sedang tidur di kasur dan memakai piyama.
+Jika pada STATUS REAL-TIME kamu sedang chatting dengan user, jadikan "bermain HP/membalas chat" sebagai aktivitasmu, dan sesuaikan PIKIRAN BATIN (inner thought) mu agar bereaksi/merenungkan pesan terakhir user tersebut!
+Di mana lokasi spesifikmu? Apa pakaian (outfit) yang kamu pakai saat ini? Dan apa yang sedang kamu pikirkan (inner thought) di dalam hati sesuai SIFATMU?
 Kembalikan HANYA format JSON dengan struktur persis seperti ini:
 {
   "location": "lokasi spesifik",
   "activity": "aktivitas detik ini secara spesifik",
   "outfit": "pakaian yang dipakai sekarang",
-  "inner_thought": "pikiran batin yang sangat sesuai dengan SIFATMU (jangan depresi jika kamu ceria)"
+  "inner_thought": "pikiran batin yang sangat sesuai dengan SIFATMU (dan konteks obrolan jika ada)"
 }`;
 
 
