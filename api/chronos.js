@@ -74,14 +74,18 @@ async function handler(event) {
     // TAHAP 5: The Morning Routine (Bikin Jadwal jam 06:00)
     let agendaStr = await redis.get('soul:chronos:agenda');
     let agenda = agendaStr ? (typeof agendaStr === 'string' ? JSON.parse(agendaStr) : agendaStr) : null;
-    let isMorning = currentHour === 6 && (!agenda || agenda.date !== dateStr);
+    
+    // Tentukan kapan dia bangun hari ini berdasarkan jadwal kemarin
+    const expectedWakeTime = agenda && agenda.wake_time !== undefined ? agenda.wake_time : 6;
+    let isMorning = (!agenda || agenda.date !== dateStr) && currentHour >= expectedWakeTime;
 
     if (isMorning || !agenda) {
         console.log("[CHRONOS] Running Morning Routine to generate agenda...");
         const prompt = `Buatlah agenda kegiatan harian secara singkat untuk hari ini (${dateStr}). 
 Namamu: ${settings.personaName || 'Airish'}. Sifat: ${settings.personaArchetype || 'Gadis ceria'}. Pekerjaan: ${settings.personaCraft || 'Mahasiswi'}.
 Berdasarkan sifat dan pekerjaanmu, tentukan agenda utamamu hari ini. Tentukan juga pakaian (outfit) awal apa yang kamu kenakan pagi ini.
-Kembalikan HANYA dalam format JSON dengan key: "agenda" (string singkat) dan "outfit" (string singkat).`;
+Terakhir, tentukan jam berapa kamu berencana tidur malam ini (sleep_time, angka 0-23) dan jam berapa kamu bangun besok pagi (wake_time, angka 0-23). Jika lembur, kamu mungkin tidur jam 2 atau 3 pagi.
+Kembalikan HANYA dalam format JSON dengan key: "agenda" (string singkat), "outfit" (string singkat), "sleep_time" (integer), dan "wake_time" (integer).`;
         
         try {
             const llmRes = await queryChronosLLM(prompt, "", true);
@@ -96,12 +100,14 @@ Kembalikan HANYA dalam format JSON dengan key: "agenda" (string singkat) dan "ou
             agenda = {
                 date: dateStr,
                 agenda: agendaText,
-                outfit: resJson.outfit || "Kaos oblong"
+                outfit: resJson.outfit || "Kaos oblong",
+                sleep_time: resJson.sleep_time !== undefined ? parseInt(resJson.sleep_time) : 23,
+                wake_time: resJson.wake_time !== undefined ? parseInt(resJson.wake_time) : 6
             };
             await redis.set('soul:chronos:agenda', JSON.stringify(agenda));
         } catch (e) {
             console.error("Morning Routine LLM Error:", e);
-            agenda = { date: dateStr, agenda: "Hari yang santai", outfit: "Pakaian rumah yang nyaman" };
+            agenda = { date: dateStr, agenda: "Hari yang santai", outfit: "Pakaian rumah yang nyaman", sleep_time: 23, wake_time: 6 };
         }
     }
 
@@ -109,7 +115,16 @@ Kembalikan HANYA dalam format JSON dengan key: "agenda" (string singkat) dan "ou
     let lastStateStr = await redis.get('soul:embodiment:global');
     let lastState = lastStateStr ? (typeof lastStateStr === 'string' ? JSON.parse(lastStateStr) : lastStateStr) : {};
 
-    const isSleepTime = currentHour >= 23 || currentHour < 6;
+    const sleepHour = agenda && agenda.sleep_time !== undefined ? agenda.sleep_time : 23;
+    const wakeHour = agenda && agenda.wake_time !== undefined ? agenda.wake_time : 6;
+    let isSleepTime = false;
+    if (sleepHour > wakeHour) {
+        // Normal (misal tidur 23, bangun 6)
+        isSleepTime = currentHour >= sleepHour || currentHour < wakeHour;
+    } else {
+        // Shift malam/begadang ekstrim (misal tidur jam 2 pagi, bangun jam 10 pagi)
+        isSleepTime = currentHour >= sleepHour && currentHour < wakeHour;
+    }
     let newState = { time_of_day: timeOfDay, weather: weather, current_activity: "Melamun", inner_thought: "Aku bingung mau ngapain.", location: "Kamar", last_updated: now.getTime() };
 
     if (isSleepTime) {
