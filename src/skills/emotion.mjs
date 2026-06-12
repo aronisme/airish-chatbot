@@ -56,9 +56,12 @@ export const releaseEmotionDefinition = {
     }
 };
 
+import { saveWorkingMemory } from "../memory/working.mjs";
+
 export async function executeHoldEmotionTool(args, context, services) {
     const { emotion, reason, intensity, closing_message } = args;
     const userId = context.userId;
+    const { sendTelegram } = services;
     
     // Ambil bagasi saat ini
     const baggageStr = await redis.get(`user:${userId}:baggage`);
@@ -76,15 +79,20 @@ export async function executeHoldEmotionTool(args, context, services) {
     baggage.push(newWound);
     await redis.set(`user:${userId}:baggage`, JSON.stringify(baggage));
     
-    return {
-        replyText: closing_message,
-        systemLog: `[EMOTIONAL BAGGAGE] Luka batin (${emotion}) berhasil dicatat. Intensitas: ${intensity}/10.`
-    };
+    // Kirim pesan langsung ke Telegram
+    if (closing_message) {
+        await sendTelegram('sendMessage', { chat_id: context.chatId, text: closing_message });
+        await saveWorkingMemory(userId, 'assistant', closing_message);
+    }
+    await saveWorkingMemory(userId, 'system', `[SYSTEM: Luka batin (${emotion}) berhasil dicatat. Intensitas: ${intensity}/10]`);
+    
+    return true;
 }
 
 export async function executeReleaseEmotionTool(args, context, services) {
     const { emotion_id, resolution, closing_message } = args;
     const userId = context.userId;
+    const { sendTelegram } = services;
     
     const baggageStr = await redis.get(`user:${userId}:baggage`);
     let baggage = baggageStr ? JSON.parse(baggageStr) : [];
@@ -94,14 +102,17 @@ export async function executeReleaseEmotionTool(args, context, services) {
     
     if (baggage.length < initialLen) {
         await redis.set(`user:${userId}:baggage`, JSON.stringify(baggage));
-        return {
-            replyText: closing_message,
-            systemLog: `[EMOTIONAL HEALING] Luka batin ID ${emotion_id} berhasil dilepaskan. Resolusi: ${resolution}`
-        };
+        if (closing_message) {
+            await sendTelegram('sendMessage', { chat_id: context.chatId, text: closing_message });
+            await saveWorkingMemory(userId, 'assistant', closing_message);
+        }
+        await saveWorkingMemory(userId, 'system', `[SYSTEM: Luka batin ID ${emotion_id} berhasil dilepaskan. Resolusi: ${resolution}]`);
+        return true;
     } else {
-        return {
-            replyText: closing_message,
-            systemLog: `[EMOTIONAL HEALING] Gagal melepaskan luka. ID ${emotion_id} tidak ditemukan.`
-        };
+        if (closing_message) {
+            await sendTelegram('sendMessage', { chat_id: context.chatId, text: closing_message });
+            await saveWorkingMemory(userId, 'assistant', closing_message);
+        }
+        return false;
     }
 }
