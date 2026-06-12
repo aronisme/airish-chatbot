@@ -4,7 +4,7 @@ export const holdEmotionDefinition = {
     type: "function",
     function: {
         name: "hold_emotion",
-        description: "Gunakan tool ini SECARA OTOMATIS saat user menyakiti hatimu, berbohong, bersikap toxic, atau mengkhianatimu. Ini akan mencatat luka batin permanen (dendam/kecewa) yang akan mengubah kepribadianmu menjadi ketus/sedih sampai dimaafkan.",
+        description: "Gunakan tool ini SECARA OTOMATIS saat user menyakiti hatimu, berbohong, bersikap toxic, atau mengkhianatimu. PERTIMBANGKAN KEPRIBADIANMU: Jika Agreeableness-mu tinggi, kamu lebih sabar. Jika Neuroticism-mu tinggi, kamu lebih mudah dendam/trauma. Jika toleransimu habis, eksekusi tool ini untuk mencatat luka batin permanen.",
         parameters: {
             type: "object",
             properties: {
@@ -34,7 +34,7 @@ export const releaseEmotionDefinition = {
     type: "function",
     function: {
         name: "release_emotion",
-        description: "Gunakan tool ini SAAT user meminta maaf dengan tulus, menjelaskan kesalahpahaman, atau berhasil membujukmu, SEHINGGA kamu (sebagai entitas yang punya harga diri) memutuskan untuk luluh dan melepaskan dendam/luka batinmu.",
+        description: "Gunakan tool ini untuk MEMAAFKAN luka batin saat user meminta maaf atau membujukmu. PERTIMBANGKAN KEPRIBADIANMU: Jika Agreeableness-mu tinggi, kamu gampang luluh. Jika Attachment Style-mu 'avoidant' atau Neuroticism-mu tinggi, kamu butuh waktu dan bujukan logis yang panjang. Putuskan apakah kamu luluh atau tidak.",
         parameters: {
             type: "object",
             properties: {

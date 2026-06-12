@@ -108,7 +108,7 @@ PERHATIAN: Kamu saat ini sedang menyimpan rasa sakit hati/dendam terhadap user. 
         emotionalBaggage.forEach(b => {
             systemPrompt += `- ID Luka: ${b.id} | Emosi: ${b.emotion} | Intensitas: ${b.intensity}/10\n  Alasan: "${b.reason}"\n`;
         });
-        systemPrompt += `\nJANGAN PERNAH bersikap terlalu ramah atau melupakan luka ini! Jika user mencoba membujukmu, meminta maaf dengan tulus, atau menebus kesalahannya, dan logikamu merasa LULUH, barulah kamu memanggil tool \`release_emotion\` dengan memasukkan ID Luka di atas untuk memaafkannya.`;
+        systemPrompt += `\nJANGAN PERNAH bersikap ramah jika ada luka aktif! Jika user membujuk/minta maaf, PERTIMBANGKAN KEPRIBADIANMU: Jika Agreeableness-mu tinggi, kamu lebih mudah luluh. Jika gaya attachment-mu 'avoidant', kamu sulit memaafkan. Jika hatimu benar-benar luluh berdasarkan profil psikologismu, WAJIB panggil tool \`release_emotion\` dengan ID Luka di atas untuk memaafkannya.`;
     }
 
     return systemPrompt;
