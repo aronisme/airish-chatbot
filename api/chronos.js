@@ -203,14 +203,24 @@ Kembalikan HANYA format JSON dengan struktur persis seperti ini:
         }
     }
 
-    // --- PROACTIVE ENGINE CHECK ---
+    // --- PROACTIVE ENGINE CHECK & LONELINESS DRIFT ---
     if (settings.proactive && !isSleepTime) {
         const { data: users } = await supabase.from('users').select('telegram_id').limit(5);
         if (users) {
+            const activeContext = await redis.get('soul:chronos:active_context');
+            
             for (const user of users) {
                 const userId = user.telegram_id;
                 const userStateStr = await redis.get(`user:${userId}:soul_state`);
-                const userState = userStateStr ? (typeof userStateStr === 'string' ? JSON.parse(userStateStr) : userStateStr) : null;
+                let userState = userStateStr ? (typeof userStateStr === 'string' ? JSON.parse(userStateStr) : userStateStr) : null;
+                
+                // LONELINESS DRIFT (Rasa Kangen Naik Sendiri)
+                if (userState && !activeContext) {
+                    if (!userState.desires) userState.desires = {};
+                    // Naik sekitar 0.05 tiap 15 menit = butuh sekitar 4-5 jam untuk max kangen
+                    userState.desires.connection = Math.min(1.0, (userState.desires.connection || 0) + 0.05);
+                    await redis.set(`user:${userId}:soul_state`, JSON.stringify(userState));
+                }
                 
                 // Fetch Trust & Baggage
                 const trustStr = await redis.get(`user:${userId}:trust_level`);

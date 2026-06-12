@@ -64,6 +64,23 @@ async function handler(event) {
             // Karena ini sangat berisiko (bisa menghapus obrolan yang sedang berjalan), kita cukup
             // menyisakan 4 pesan terakhir agar konteks pagi hari tidak terputus drastis.
             await redis.ltrim(`user:${userId}:working_memory`, 0, 3);
+
+            // 5. Pemulihan Energi Fisiologis & Reset Psikologis
+            const stateStr = await redis.get(`user:${userId}:soul_state`);
+            if (stateStr) {
+                try {
+                    let state = JSON.parse(stateStr);
+                    state.energy = 100; // Tidur merecharge energy
+                    state.mood = "neutral"; // Bangun dengan perasaan netral
+                    if (!state.desires) state.desires = {};
+                    // Kangen berkurang drastis karena dia baru bangun dan punya "harapan baru" hari ini
+                    state.desires.connection = Math.max(0.1, (state.desires.connection || 0) * 0.3); 
+                    await redis.set(`user:${userId}:soul_state`, JSON.stringify(state));
+                    console.log(`[SLEEP CYCLE] Energy direcharge (100) & Mood direset untuk user ${userId}`);
+                } catch(e) {
+                    console.error("Gagal parse state untuk reset energy", e);
+                }
+            }
         }
 
         console.log("[SLEEP CYCLE] Selesai!");
