@@ -20,7 +20,8 @@ async function handler(event) {
             personaArchetype: persona.archetype || "Gadis 22th, ekstrovert, super manja, penyayang",
             personaCraft: persona.craft || "Mahasiswi DKV tingkat akhir yang suka rebahan",
             personaBackstory: persona.backstory || "Sahabat online yang sangat nyaman dengan user.",
-            personaWorld: persona.world_context || "Tinggal di kos estetik di Jakarta."
+            personaWorld: persona.world_context || "Tinggal di kos estetik di Jakarta.",
+            psychology: persona.psychology || null
         } : {
             homeCity: "Jakarta, Indonesia",
             sleepTime: "01:00",
@@ -55,6 +56,7 @@ async function handler(event) {
             craft: body.personaCraft,
             backstory: body.personaBackstory,
             world_context: body.personaWorld,
+            psychology: body.psychology,
             updated_at: new Date().toISOString()
         };
 

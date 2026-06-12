@@ -283,6 +283,55 @@
                     <span id="cur-val">6</span>/10
                 </div>
             </div>
+
+            <hr style="border-color: var(--glass-border); margin: 30px 0;">
+            <h3 style="color: var(--neon-accent);">Big Five Personality</h3>
+            
+            <div class="form-group">
+                <label>Openness (Terbuka hal baru)</label>
+                <div class="slider-container">
+                    <input type="range" id="openness" min="0" max="10" value="7" oninput="document.getElementById('op-val').innerText = this.value/10">
+                    <span id="op-val">0.7</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Conscientiousness (Keteraturan)</label>
+                <div class="slider-container">
+                    <input type="range" id="conscientiousness" min="0" max="10" value="4" oninput="document.getElementById('co-val').innerText = this.value/10">
+                    <span id="co-val">0.4</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Extraversion (Ekstrovert)</label>
+                <div class="slider-container">
+                    <input type="range" id="extraversion" min="0" max="10" value="8" oninput="document.getElementById('ex-val').innerText = this.value/10">
+                    <span id="ex-val">0.8</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Agreeableness (Pemaaf/Ramah)</label>
+                <div class="slider-container">
+                    <input type="range" id="agreeableness" min="0" max="10" value="7" oninput="document.getElementById('ag-val').innerText = this.value/10">
+                    <span id="ag-val">0.7</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Neuroticism (Mudah Cemas/Panik)</label>
+                <div class="slider-container">
+                    <input type="range" id="neuroticism" min="0" max="10" value="6" oninput="document.getElementById('ne-val').innerText = this.value/10">
+                    <span id="ne-val">0.6</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Attachment Style</label>
+                <select id="attachmentStyle">
+                    <option value="secure">Secure (Sehat & Mundur Teratur)</option>
+                    <option value="anxious-secure">Anxious (Bucin & Takut Ditinggal)</option>
+                    <option value="avoidant">Avoidant (Cuek & Mudah Menjauh)</option>
+                </select>
+            </div>
+            <hr style="border-color: var(--glass-border); margin: 30px 0;">
             <div class="form-group toggle">
                 <label class="switch">
                     <input type="checkbox" id="proactive" checked>
@@ -404,6 +453,19 @@
                     document.getElementById('cur-val').innerText = data.settings.curiosity || 6;
                     document.getElementById('proactive').checked = data.settings.proactive !== false;
 
+                    if (data.settings.psychology) {
+                        const psy = data.settings.psychology;
+                        if (psy.big_five) {
+                            ['openness', 'conscientiousness', 'extraversion', 'agreeableness', 'neuroticism'].forEach(k => {
+                                document.getElementById(k).value = psy.big_five[k] * 10;
+                                document.getElementById(k.substring(0,2)+'-val').innerText = psy.big_five[k];
+                            });
+                        }
+                        if (psy.attachment_style) {
+                            document.getElementById('attachmentStyle').value = psy.attachment_style;
+                        }
+                    }
+
                     // Persona
                     document.getElementById('personaName').value = data.settings.personaName || "Airish";
                     document.getElementById('personaArchetype').value = data.settings.personaArchetype || "Gadis 22th, ekstrovert, super manja, penyayang";
@@ -429,7 +491,17 @@
                 personaArchetype: document.getElementById('personaArchetype').value,
                 personaCraft: document.getElementById('personaCraft').value,
                 personaBackstory: document.getElementById('personaBackstory').value,
-                personaWorld: document.getElementById('personaWorld').value
+                personaWorld: document.getElementById('personaWorld').value,
+                psychology: {
+                    big_five: {
+                        openness: parseInt(document.getElementById('openness').value)/10,
+                        conscientiousness: parseInt(document.getElementById('conscientiousness').value)/10,
+                        extraversion: parseInt(document.getElementById('extraversion').value)/10,
+                        agreeableness: parseInt(document.getElementById('agreeableness').value)/10,
+                        neuroticism: parseInt(document.getElementById('neuroticism').value)/10
+                    },
+                    attachment_style: document.getElementById('attachmentStyle').value
+                }
             };
 
             try {

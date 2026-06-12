@@ -243,13 +243,20 @@ async function processMessage(body) {
         // Simpan pesan user
         await saveWorkingMemory(userId, 'user', text);
 
+        // Gabungkan identity dari database (jika user sudah mengatur di dashboard)
+        const userIdentity = { ...DEFAULT_IDENTITY };
+        if (persona && persona.psychology) {
+            userIdentity.big_five = persona.psychology.big_five || userIdentity.big_five;
+            userIdentity.attachment_style = persona.psychology.attachment_style || userIdentity.attachment_style;
+        }
+
         // --- SOUL ENGINE PROCESSING (Perception & State) ---
         const currentState = await getSoulState(userId);
         const perception = await parseUserMessage(text);
-        const newState = calculateSoulState(currentState, perception, DEFAULT_IDENTITY);
+        const newState = calculateSoulState(currentState, perception, userIdentity);
         
         // Menghitung Desire (Motivasi Intrinsik)
-        newState.desires = calculateDesires(currentState.desires || {}, perception, text.length, persona, DEFAULT_IDENTITY);
+        newState.desires = calculateDesires(currentState.desires || {}, perception, text.length, persona, userIdentity);
         await saveSoulState(userId, newState);
         
         let embodimentStr = await redis.get('soul:embodiment:global');
@@ -275,7 +282,7 @@ async function processMessage(body) {
             soulState: newState,
             activeGoal,
             desires: newState.desires,
-            identity: DEFAULT_IDENTITY,
+            identity: userIdentity,
             embodiment: embodiment
         });
 
