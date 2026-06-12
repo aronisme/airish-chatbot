@@ -237,7 +237,9 @@ Kembalikan HANYA format JSON dengan struktur persis seperti ini:
                 
                 if (userState && userState.desires && userState.desires.connection > 0.9) {
                     const isWaiting = await redis.get(`user:${userId}:waiting_reply`);
-                    if (!isWaiting) {
+                    
+                    // JANGAN KIRIM PROACTIVE CHAT JIKA SEDANG AKTIF CHATTING!
+                    if (!isWaiting && !activeContext) {
                         // CEK PSIKOLOGIS SEBELUM CHAT DULUAN
                         if (hasBaggage || trustValue < 0.2) {
                             console.log(`[PROACTIVE] Batal menyapa user ${userId} karena masih ada dendam (Baggage) atau Trust Level sangat rendah (${trustValue}).`);
