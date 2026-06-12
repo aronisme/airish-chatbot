@@ -193,7 +193,7 @@ Kembalikan HANYA format JSON dengan struktur persis seperti ini:
     }
 
     // --- PROACTIVE ENGINE CHECK ---
-    if (settings.proactive && timeOfDay !== "Dini Hari") {
+    if (settings.proactive && !isSleepTime) {
         const { data: users } = await supabase.from('users').select('telegram_id').limit(5);
         if (users) {
             for (const user of users) {
