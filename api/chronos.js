@@ -186,15 +186,39 @@ Kembalikan HANYA format JSON dengan struktur persis seperti ini:
                 const userStateStr = await redis.get(`user:${userId}:soul_state`);
                 const userState = userStateStr ? (typeof userStateStr === 'string' ? JSON.parse(userStateStr) : userStateStr) : null;
                 
+                // Fetch Trust & Baggage
+                const trustStr = await redis.get(`user:${userId}:trust_level`);
+                const trustValue = trustStr ? parseFloat(trustStr) : 0.3;
+                
+                const baggageStr = await redis.get(`user:${userId}:baggage`);
+                let hasBaggage = false;
+                if (baggageStr) {
+                    try {
+                        const bag = JSON.parse(baggageStr.replace(/,\s*]/g, ']'));
+                        if (bag.length > 0) hasBaggage = true;
+                    } catch(e) {}
+                }
+                
                 if (userState && userState.desires && userState.desires.connection > 0.9) {
                     const isWaiting = await redis.get(`user:${userId}:waiting_reply`);
                     if (!isWaiting) {
-                        console.log(`[PROACTIVE] User ${userId} kangen! Menyiapkan chat duluan...`);
+                        // CEK PSIKOLOGIS SEBELUM CHAT DULUAN
+                        if (hasBaggage || trustValue < 0.2) {
+                            console.log(`[PROACTIVE] Batal menyapa user ${userId} karena masih ada dendam (Baggage) atau Trust Level sangat rendah (${trustValue}).`);
+                            continue; // Skip user ini
+                        }
+
+                        console.log(`[PROACTIVE] User ${userId} kangen dan Trust Level aman (${trustValue}). Menyiapkan chat duluan...`);
                         
+                        let trustContext = "Kalian adalah teman biasa. Sapa dengan santai.";
+                        if (trustValue >= 0.8) trustContext = "Kalian adalah SAHABAT DEKAT. Sapa dengan sangat manja, hangat, dan tanpa basa-basi.";
+                        else if (trustValue <= 0.4) trustContext = "Kamu baru mengenalnya. Sapa dengan sedikit basa-basi dan jangan terlalu agresif.";
+
                         // Menjalankan LLM untuk menulis pesan proaktif
                         const proPrompt = `Kamu adalah Airish. Saat ini kamu sedang ${newState.current_activity} di ${newState.location}.
 Pikiran batinmu: "${newState.inner_thought}". 
-Kamu sangat kangen dengan seorang teman yang sudah lama tidak chat. 
+Kamu merasa kesepian dan ingin menyapa pengguna ini duluan.
+[Konteks Hubungan]: ${trustContext}
 Tulis pesan pendek (1-2 kalimat) untuk menyapanya secara natural (WA style). Jangan terlalu formal!`;
                         
                         try {
