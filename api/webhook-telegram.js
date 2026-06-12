@@ -107,7 +107,7 @@ async function generateQwenImage(prompt, customRefImage = null) {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            model: "qwen-image-edit",
+            model: "qwen-image-edit-plus-2025-10-30",
             input: {
                 messages: [
                     {
