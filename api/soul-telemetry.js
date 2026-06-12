@@ -37,10 +37,11 @@ async function handler(event) {
         const { data: users } = await supabase.from('users').select('telegram_id').limit(10);
         if (users) {
             for (const user of users) {
-                const [stateStr, promptStr, baggageStr] = await Promise.all([
+                const [stateStr, promptStr, baggageStr, trustStr] = await Promise.all([
                     redis.get(`user:${user.telegram_id}:soul_state`),
                     redis.get(`user:${user.telegram_id}:last_system_prompt`),
-                    redis.get(`user:${user.telegram_id}:baggage`)
+                    redis.get(`user:${user.telegram_id}:baggage`),
+                    redis.get(`user:${user.telegram_id}:trust_level`)
                 ]);
                 const state = parse(stateStr);
                 let baggage = [];
@@ -55,6 +56,7 @@ async function handler(event) {
                         telegram_id: user.telegram_id,
                         last_system_prompt: promptStr || null,
                         baggage: baggage,
+                        trust_level: trustStr ? parseFloat(trustStr) : 0.3,
                         ...state
                     });
                 }

@@ -285,8 +285,10 @@ async function processMessage(body) {
             emotionalBaggage = baggageStr || [];
         }
 
-        // --- CONTEXT BUILDER ---
-        const relationship = userData.relationship || null;
+        const trustStr = await redis.get(`user:${userId}:trust_level`);
+        let trustValue = 0.3;
+        if (trustStr) trustValue = parseFloat(trustStr);
+        const relationship = { trust: trustValue * 100 }; // Skala 0-100 untuk builder
         const activeGoal = await getActiveGoal(userId);
         const systemPrompt = buildContext({ 
             persona, 
@@ -299,7 +301,8 @@ async function processMessage(body) {
             desires: newState.desires,
             identity: userIdentity,
             embodiment: embodiment,
-            emotionalBaggage: emotionalBaggage
+            emotionalBaggage: emotionalBaggage,
+            trustLevel: trustStr || 'neutral'
         });
 
         // Simpan system prompt terakhir ke Redis untuk debugging/dashboard

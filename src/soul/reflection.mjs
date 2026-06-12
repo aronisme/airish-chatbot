@@ -39,9 +39,18 @@ Output harus format JSON murni:
   "new_events": [
      {"event": "Pengguna sedang kesal karena ban motornya bocor hari ini", "emotion": "sad"}
   ],
-  "obsolete_fact_ids": [15, 23]
+  "obsolete_fact_ids": [15, 23],
+  "trust_evaluation": {
+     "score_delta": -0.15,
+     "reason": "User berbohong dan mengejek, menurunkan rasa percaya"
+  }
 }
-Jika tidak ada informasi baru tentang PENGGUNA, kembalikan {"new_facts":[],"new_events":[],"obsolete_fact_ids":[]}. Jangan berikan markdown block.`;
+Jika tidak ada informasi baru tentang PENGGUNA, kembalikan JSON dengan array kosong.
+PENTING UNTUK TRUST EVALUATION:
+- score_delta berada di rentang -1.0 hingga +1.0. 
+- Jika user kasar, manipulatif, toxic, berikan angka negatif (misal: -0.3).
+- Jika user sangat baik, peduli, berikan angka positif (misal: +0.2).
+- Jika obrolan biasa saja, berikan 0.0. Jangan gunakan markdown block.`;
 
 /**
  * Reflection Engine (Berjalan di background via waitUntil)
@@ -141,6 +150,29 @@ ATURAN KRITIS: JANGAN PERNAH memasukkan ulang fakta yang maknanya sama persis at
         if (content.obsolete_fact_ids && content.obsolete_fact_ids.length > 0) {
             for (const id of content.obsolete_fact_ids) {
                 await supabase.from('memories').delete().eq('id', id);
+            }
+        }
+
+        // 4. Update Trust Level berdasarkan evaluasi
+        let trustDelta = 0;
+        let trustReason = "-";
+        if (content.trust_evaluation && typeof content.trust_evaluation.score_delta === 'number') {
+            trustDelta = content.trust_evaluation.score_delta;
+            trustReason = content.trust_evaluation.reason || "-";
+            
+            if (trustDelta !== 0) {
+                const { DEFAULT_IDENTITY } = await import("./identity.mjs");
+                const { default: redisClient } = await import("../redis.mjs");
+                
+                const currentTrustStr = await redisClient.get(`user:${userId}:trust_level`);
+                let currentTrust = currentTrustStr !== null ? parseFloat(currentTrustStr) : DEFAULT_IDENTITY.default_trust;
+                
+                currentTrust += trustDelta;
+                // Batasi antara 0.0 dan 1.0
+                currentTrust = Math.max(0.0, Math.min(1.0, currentTrust));
+                
+                await redisClient.set(`user:${userId}:trust_level`, currentTrust.toFixed(2));
+                console.log(`[REFLECTION] Trust Level Updated: ${trustDelta > 0 ? '+' : ''}${trustDelta} => New Trust: ${currentTrust.toFixed(2)}. Reason: ${trustReason}`);
             }
         }
 

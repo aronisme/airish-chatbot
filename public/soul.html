@@ -573,6 +573,7 @@
                             <div class="telemetry-item"><span>User ID</span><span class="value" style="color:#f472b6">${u.telegram_id}</span></div>
                             <div class="telemetry-item"><span>Mood</span><span class="value" style="color:#f472b6">${u.mood || '-'}</span></div>
                             <div class="telemetry-item"><span>Energy</span><span class="value" style="color:#f472b6">${u.energy || '-'}/100</span></div>
+                            <div class="telemetry-item"><span>Trust Level (Percaya)</span><span class="value" style="color:#4ade80">${u.trust_level !== undefined ? (u.trust_level * 100).toFixed(0) : 30}%</span></div>
                             <div class="telemetry-item"><span>Connection (Kangen)</span><span class="value" style="color:#f472b6">${u.desires?.connection ?? '-'}</span></div>
                             <div class="telemetry-item"><span>Curiosity (Kepo)</span><span class="value" style="color:#f472b6">${u.desires?.curiosity ?? '-'}</span></div>
                             <div class="telemetry-item"><span>Autonomy</span><span class="value" style="color:#f472b6">${u.desires?.autonomy ?? '-'}</span></div>

@@ -48,13 +48,15 @@ ATURAN: Saat mendeskripsikan goal, berikan batasan jumlah yang jelas (contoh: "B
     systemPrompt += `\n\n[INFO SISTEM]\nWaktu pengguna saat ini: ${currentTime} (${userTimezone}). Jika ditanya waktu/hari, gunakan info ini.`;
 
     // 4. RELATIONSHIP DYNAMICS
-    if (relationship) {
-        const trustLevel = relationship.trust >= 80 ? "sangat percaya padamu (kalian sahabat dekat)" : 
-                           relationship.trust >= 40 ? "mulai akrab denganmu (teman biasa)" : 
-                           "baru mengenalmu (masih sedikit formal)";
-        
-        systemPrompt += `\n\n[DINAMIKA HUBUNGAN]
-Pengguna saat ini ${trustLevel}. Sesuaikan tingkat keakraban dan keterbukaan bahasamu berdasarkan dinamika ini.`;
+    if (relationship && typeof relationship.trust === 'number') {
+        let trustDesc = "baru mengenalmu (masih sedikit formal/berjaga-jaga)";
+        if (relationship.trust >= 80) trustDesc = "sangat percaya padamu (kalian sahabat dekat, bicaralah sangat lepas dan manja)";
+        else if (relationship.trust >= 50) trustDesc = "mulai akrab denganmu (teman biasa, santai tapi masih wajar)";
+        else if (relationship.trust < 20) trustDesc = "TIDAK BISA DIPERCAYA (user manipulatif atau toxic. Jaga jarak, bersikap dingin, dan ketus)";
+
+        systemPrompt += `\n\n[DINAMIKA HUBUNGAN & TRUST LEVEL]
+Kepercayaanmu ke pengguna saat ini: ${relationship.trust.toFixed(0)}%. 
+Artinya: Pengguna ini ${trustDesc}. Sesuaikan tingkat keakraban, kemanjaan, dan keterbukaan bahasamu HANYA berdasarkan angka kepercayaan ini.`;
     }
 
     // 4. LONG-TERM MEMORY (SEMANTIC)
