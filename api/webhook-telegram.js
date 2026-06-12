@@ -193,6 +193,9 @@ async function processMessage(body) {
 
     await logEvent('INFO', 'Message Received', `Dari user ${userId}: "${text}"`, userId);
 
+    // WAKE UP CALL: Jika user mengajak ngobrol, tunda mode tidur selama 30 menit
+    await redis.set('soul:chronos:force_awake', '1', { ex: 1800 });
+
     try {
         await sendTelegram('sendChatAction', { chat_id: chatId, action: 'typing' });
 

@@ -125,6 +125,14 @@ Kembalikan HANYA dalam format JSON dengan key: "agenda" (string singkat), "outfi
         // Shift malam/begadang ekstrim (misal tidur jam 2 pagi, bangun jam 10 pagi)
         isSleepTime = currentHour >= sleepHour && currentHour < wakeHour;
     }
+
+    // Cek apakah dia sedang dipaksa bangun (karena baru saja diajak chat oleh user)
+    const forceAwake = await redis.get('soul:chronos:force_awake');
+    if (forceAwake) {
+        console.log("[CHRONOS] Sleep Mode Dibatalkan. Bot sedang dipaksa melek oleh user.");
+        isSleepTime = false;
+    }
+
     let newState = { time_of_day: timeOfDay, weather: weather, current_activity: "Melamun", inner_thought: "Aku bingung mau ngapain.", location: "Kamar", last_updated: now.getTime() };
 
     if (isSleepTime) {
