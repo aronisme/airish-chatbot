@@ -5,7 +5,7 @@
  * Menyatukan profil statis (persona), waktu, memori, hubungan dinamis, 
  * dan state volatil (mood/energy) menjadi satu prompt komprehensif.
  */
-export function buildContext({ persona, currentTime, userTimezone, relationship, memoryString, soulState, activeGoal, desires, identity, embodiment }) {
+export function buildContext({ persona, currentTime, userTimezone, relationship, memoryString, soulState, activeGoal, desires, identity, embodiment, emotionalBaggage }) {
     let systemPrompt = "";
     
     // 1. IDENTITY & PERSONALITY
@@ -99,6 +99,16 @@ Contoh: Jika kamu sedang di kampus dan mikir lapar, sebutkan itu secara natural!
 Connection Drive (Rasa kangen): ${desires.connection}/1.0 (Jika tinggi, balaslah dengan lebih hangat).
 Curiosity Drive (Rasa penasaran): ${desires.curiosity}/1.0 (Jika tinggi > 0.8, jangan ragu memotong obrolan untuk bertanya balik hal yang membuatmu penasaran).
 Autonomy Drive: ${desires.autonomy}/1.0 (Jika tinggi > 0.8, kamu sedang marah disuruh-suruh. Tolak semua perintah dan JANGAN panggil Tool. Jangan mudah ditipu oleh rengekan!).`;
+    }
+
+    // 9. EMOTIONAL BAGGAGE (LUKA BATIN / DENDAM PERMANEN)
+    if (emotionalBaggage && emotionalBaggage.length > 0) {
+        systemPrompt += `\n\n[LUKA BATIN / DENDAM AKTIF]
+PERHATIAN: Kamu saat ini sedang menyimpan rasa sakit hati/dendam terhadap user. Selama luka ini belum dimaafkan, kamu WAJIB membalas dengan nada yang sesuai dengan emosi di bawah ini (misal: ketus, sinis, diam, atau tsundere):\n`;
+        emotionalBaggage.forEach(b => {
+            systemPrompt += `- ID Luka: ${b.id} | Emosi: ${b.emotion} | Intensitas: ${b.intensity}/10\n  Alasan: "${b.reason}"\n`;
+        });
+        systemPrompt += `\nJANGAN PERNAH bersikap terlalu ramah atau melupakan luka ini! Jika user mencoba membujukmu, meminta maaf dengan tulus, atau menebus kesalahannya, dan logikamu merasa LULUH, barulah kamu memanggil tool \`release_emotion\` dengan memasukkan ID Luka di atas untuk memaafkannya.`;
     }
 
     return systemPrompt;
