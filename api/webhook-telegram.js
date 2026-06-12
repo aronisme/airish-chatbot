@@ -271,7 +271,7 @@ async function processMessage(body) {
         await logEvent('INFO', 'Soul State Updated', `Mood: ${newState.mood}, Energy: ${newState.energy}, Emotion: ${perception.emotion}`, userId);
 
         const baggageStr = await redis.get(`user:${userId}:baggage`);
-        const emotionalBaggage = baggageStr ? JSON.parse(baggageStr) : [];
+        const emotionalBaggage = typeof baggageStr === 'string' ? JSON.parse(baggageStr) : (baggageStr || []);
 
         // --- CONTEXT BUILDER ---
         const relationship = userData.relationship || null;

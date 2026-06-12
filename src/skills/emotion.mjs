@@ -65,7 +65,7 @@ export async function executeHoldEmotionTool(args, context, services) {
     
     // Ambil bagasi saat ini
     const baggageStr = await redis.get(`user:${userId}:baggage`);
-    let baggage = baggageStr ? JSON.parse(baggageStr) : [];
+    let baggage = typeof baggageStr === 'string' ? JSON.parse(baggageStr) : (baggageStr || []);
     
     // Tambah luka baru (ID unik 6 karakter)
     const newWound = {
@@ -95,7 +95,7 @@ export async function executeReleaseEmotionTool(args, context, services) {
     const { sendTelegram } = services;
     
     const baggageStr = await redis.get(`user:${userId}:baggage`);
-    let baggage = baggageStr ? JSON.parse(baggageStr) : [];
+    let baggage = typeof baggageStr === 'string' ? JSON.parse(baggageStr) : (baggageStr || []);
     
     const initialLen = baggage.length;
     baggage = baggage.filter(b => b.id !== emotion_id);
