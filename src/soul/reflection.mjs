@@ -58,9 +58,9 @@ export async function runReflectionEngine(supabase, userId, workingMemory) {
             ? existingMemories.map(m => `[ID: ${m.id}] ${m.fact}`).join('\n') 
             : "Belum ada fakta yang tersimpan.";
 
-        // Ambil 5 pesan terakhir untuk direnungkan
+        // Ambil pesan hari ini untuk direnungkan
         // Fix 2: Filter konten assistant — strip catatan visual/embodiment yang hanya menjadi noise
-        const recentChats = workingMemory.slice(-5).map(m => {
+        const recentChats = workingMemory.map(m => {
             if (m.role === 'assistant' || m.role !== 'user') {
                 let cleanContent = (m.content || '')
                     .replace(/\[Catatan visual.*?\]/gs, '[foto dikirim]')
