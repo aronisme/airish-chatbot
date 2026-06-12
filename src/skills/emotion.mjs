@@ -18,7 +18,7 @@ export const holdEmotionDefinition = {
                 },
                 intensity: {
                     type: "integer",
-                    description: "Skala seberapa sakit hati/marah (1 sampai 10). Jika 10, kamu sangat murka."
+                    description: "Skala seberapa sakit hati/marah (1-10). Panduan: 1-3 (Kesal ringan/sindiran), 4-6 (Kecewa sedang/dibohongi/ejekan kasar), 7-9 (Luka batin parah/dihina harga dirinya/dikhianati), 10 (Trauma/Murka ekstrim/pelecehan)."
                 },
                 closing_message: {
                     type: "string",
