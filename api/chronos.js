@@ -89,7 +89,12 @@ Kembalikan HANYA dalam format JSON dengan key: "agenda" (string singkat), "outfi
         
         try {
             const llmRes = await queryChronosLLM(prompt, "", true);
-            const resJson = JSON.parse(llmRes.choices[0].message.content);
+            let content = llmRes.choices[0].message.content.trim();
+            if (content.startsWith('```json')) content = content.substring(7);
+            else if (content.startsWith('```')) content = content.substring(3);
+            if (content.endsWith('```')) content = content.substring(0, content.length - 3);
+            
+            const resJson = JSON.parse(content.trim());
             let agendaText = resJson.agenda || "Sibuk nugas";
             if (Array.isArray(agendaText)) {
                 agendaText = agendaText.map(item => typeof item === 'object' ? Object.values(item).join(' - ') : item).join(', ');

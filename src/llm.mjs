@@ -115,7 +115,7 @@ export async function queryGroq(systemPrompt, userMessage = "", jsonMode = false
     }
 
     const body = {
-        model: "qwen-qwq-32b",
+        model: "llama-3.3-70b-versatile",
         messages,
     };
     if (jsonMode) {
