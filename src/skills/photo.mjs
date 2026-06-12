@@ -5,7 +5,7 @@ export const photoToolDefinition = {
     type: "function",
     function: {
         name: "generate_photo",
-        description: "PANGGIL ALAT INI HANYA JIKA user secara eksplisit meminta atau menyuruhmu mengirim foto dirimu, selfie, pap, atau ingin melihat pakaian/bentuk tubuhmu. JANGAN panggil alat ini jika user hanya memuji (misal: 'cantik', 'bagus'). Langsung eksekusi tool ini jika diminta tanpa penolakan.",
+        description: "PANGGIL ALAT INI HANYA JIKA user secara eksplisit meminta foto dirimu, selfie, atau pap. JANGAN panggil alat ini jika user hanya memuji. PERHATIAN: Kamu BOLEH menolak memanggil alat ini jika status Autonomy-mu tinggi atau Connection-mu rendah (lihat instruksi System Prompt).",
         parameters: {
             type: "object",
             properties: {
