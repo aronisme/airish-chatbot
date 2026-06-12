@@ -9,7 +9,7 @@ import { calculateDesires } from "../src/soul/desire.mjs";
 import { DEFAULT_IDENTITY } from "../src/soul/identity.mjs";
 import { buildContext } from "../src/context/builder.mjs";
 import { retrieveEpisodicMemories } from "../src/memory/episodic.mjs";
-import { runReflectionEngine } from "../src/soul/reflection.mjs";
+// import { runReflectionEngine } from "../src/soul/reflection.mjs"; // Dipindah ke chronos.js
 import redis from "../src/redis.mjs";
 import { queryLLMWithFallback } from "../src/llm.mjs";
 
@@ -335,9 +335,10 @@ async function processMessage(body) {
         }
 
         // --- REFLECTION ENGINE ---
-        // Dijalankan setelah merespons user (Aman dalam limit 60 detik)
-        const recentHistory = await getWorkingMemory(userId, 6);
-        await runReflectionEngine(supabase, userId, recentHistory);
+        // Eksekusi ini telah dipindahkan ke Sleep Mode (chronos.js) 
+        // agar tidak membuang kuota LLM di setiap pesan.
+        // const recentHistory = await getWorkingMemory(userId, 6);
+        // await runReflectionEngine(supabase, userId, recentHistory);
 
     } catch (error) {
         await logEvent('ERROR', 'Process Message Exception', `Err: ${error.message}`, userId);

@@ -7,50 +7,65 @@
  */
 export function calculateSoulState(currentState, perception) {
     let newEnergy = currentState.energy;
-    let newMood = currentState.mood;
+    let moodValue = currentState.mood_value !== undefined ? currentState.mood_value : 0;
 
-    // 1. Kalkulasi Energy Cost
-    // Setiap interaksi mengurangi energi. Interaksi emosional tinggi menyita lebih banyak energi.
-    let energyCost = 2; // Base cost untuk merespons
+    // 1. Kalkulasi Energy Drain (sama seperti sebelumnya)
+    let energyCost = 2; 
+    if (perception.intent === "question" || perception.intent === "command") {
+        energyCost = 4;
+    }
+    if (perception.emotion === "angry" || perception.emotion === "anxious") {
+        energyCost = 5;
+    }
+    if (perception.topic_shift) {
+        energyCost += 1;
+    }
+    newEnergy = Math.max(0, newEnergy - energyCost);
+
+    // 2. Kalkulasi Mood (Lapisan Menengah / Akumulatif)
+    let moodDelta = 0;
     
-    if (perception.importance > 0.6) energyCost += 3; // Topik penting
-    if (perception.emotion === "angry" || perception.emotion === "sad") energyCost += 4; // Empati melelahkan
-    if (perception.intent === "venting") energyCost += 3; // Menjadi pendengar menyita energi
+    // Evaluasi Emosi & Hostility User
+    if (perception.emotion === 'happy' || perception.emotion === 'excited') moodDelta = +10;
+    if (perception.emotion === 'angry' || perception.hostility > 0.5) moodDelta = -15;
+    if (perception.emotion === 'sad') moodDelta = -5; // Kesedihan user sedikit menurunkan mood bot
+    
+    // Evaluasi Intent
+    if (perception.intent === 'greeting' || perception.intent === 'compliment') moodDelta += 5;
 
-    newEnergy = Math.max(10, newEnergy - energyCost); // Energi tidak bisa kurang dari 10
+    // Terapkan Delta ke Mood Value (Dibatasi -100 s/d 100)
+    moodValue = Math.max(-100, Math.min(100, moodValue + moodDelta));
 
-    // 2. Kalkulasi Mood (Emotional Contagion & Empathy)
+    // Peluruhan (Decay) perlahan kembali ke Netral (0) setiap pesan
+    moodValue = Math.round(moodValue * 0.95);
+
+    // 3. Terjemahkan Angka ke Label Teks untuk LLM
+    let newMood = "calm";
     if (newEnergy < 25) {
-        // Jika kelelahan, mood selalu lelah tanpa memandang pesan user
         newMood = "tired";
+    } else if (moodValue > 60) {
+        newMood = "excited";
+    } else if (moodValue > 20) {
+        newMood = "cheerful";
+    } else if (moodValue < -60) {
+        newMood = "depressed/hostile";
+    } else if (moodValue < -20) {
+        newMood = "gloomy";
     } else {
-        // Jika masih ada energi, sesuaikan mood dengan empati
-        switch (perception.emotion) {
-            case "sad":
-            case "anxious":
-                newMood = "concerned";
-                break;
-            case "happy":
-            case "excited":
-                newMood = "excited";
-                break;
-            case "angry":
-                newMood = "calm"; // Airish menenangkan diri jika user marah
-                break;
-            default:
-                if (perception.intent === "question" || perception.intent === "request") {
-                    newMood = "helpful";
-                } else if (perception.intent === "greeting") {
-                    newMood = "welcoming";
-                } else {
-                    newMood = "calm"; // Default mood
-                }
-                break;
+        // Fallback: Jika mood netral, berikan empati sesaat jika user butuh
+        if (perception.emotion === 'sad' || perception.emotion === 'anxious') {
+            newMood = "concerned";
+        } else if (perception.intent === 'question' || perception.intent === 'request') {
+            newMood = "helpful";
+        } else {
+            newMood = "calm";
         }
     }
 
     return {
         energy: newEnergy,
-        mood: newMood
+        mood: newMood,
+        mood_value: moodValue,
+        last_updated: Date.now()
     };
 }
