@@ -105,11 +105,42 @@ Kembalikan HANYA dalam format JSON dengan key: "agenda" (string singkat) dan "ou
         }
     }
 
-    // TAHAP 6: The 15-Min Pulse (Aliran Kesadaran)
+    // TAHAP 6: The 15-Min Pulse & SLEEP MODE
     let lastStateStr = await redis.get('soul:embodiment:global');
     let lastState = lastStateStr ? (typeof lastStateStr === 'string' ? JSON.parse(lastStateStr) : lastStateStr) : {};
 
-    console.log("[CHRONOS] Running 15-Min Pulse (Inner Monologue)...");
+    const isSleepTime = currentHour >= 23 || currentHour < 6;
+    let newState = { time_of_day: timeOfDay, weather: weather, current_activity: "Melamun", inner_thought: "Aku bingung mau ngapain.", location: "Kamar", last_updated: now.getTime() };
+
+    if (isSleepTime) {
+        console.log("[CHRONOS] Sleep Mode Active. Bypassing Pulse LLM...");
+        newState = {
+            time_of_day: timeOfDay,
+            weather: weather,
+            current_activity: "Sedang tidur pulas di atas kasur",
+            inner_thought: "Zzz... [Mimpi yang absurd dan tenang]",
+            location: "Kamar Tidur",
+            outfit: "Piyama tidur sutra yang nyaman",
+            agenda: "Tidur malam memulihkan energi",
+            last_updated: now.getTime()
+        };
+        await redis.set('soul:embodiment:global', JSON.stringify(newState));
+
+        // Cek apakah Reflection Malam sudah dijalankan hari ini
+        const todayDateStr = now.toLocaleDateString("en-US", { timeZone: "Asia/Jakarta" });
+        const lastSleepReflection = await redis.get('soul:chronos:last_reflection_date');
+
+        if (lastSleepReflection !== todayDateStr) {
+            console.log("[CHRONOS] Triggering Background Nightly Reflection...");
+            await redis.set('soul:chronos:last_reflection_date', todayDateStr);
+            
+            // Tembak endpoint terpisah secara background agar Vercel tidak timeout
+            const host = event.headers.host || "localhost:3000";
+            const protocol = host.includes('localhost') ? 'http' : 'https';
+            fetch(`${protocol}://${host}/api/sleep-cycle`, { method: 'POST' }).catch(e => console.error(e));
+        }
+    } else {
+        console.log("[CHRONOS] Running 15-Min Pulse (Inner Monologue)...");
     const pulsePrompt = `Namamu: ${settings.personaName || 'Airish'}. Sifat: ${settings.personaArchetype || 'Ceria'}. Pekerjaan: ${settings.personaCraft || 'Mahasiswi'}.
 Lokasi rumah: ${settings.homeCity}. Waktu saat ini: ${timeStr} (${timeOfDay}). Cuaca: ${weather}.
 Agenda hari ini: ${agenda.agenda}. Pakaian yang terakhir kamu kenakan: ${lastState.outfit || agenda.outfit}.
@@ -125,28 +156,25 @@ Kembalikan HANYA format JSON dengan struktur persis seperti ini:
   "inner_thought": "pikiran batin yang sangat sesuai dengan SIFATMU (jangan depresi jika kamu ceria)"
 }`;
 
-    let newState = { time_of_day: timeOfDay, weather: weather, current_activity: "Melamun", inner_thought: "Aku bingung mau ngapain.", location: "Kamar", last_updated: now.getTime() };
-    
-    try {
-        const pulseRes = await queryChronosLLM(pulsePrompt, "", true);
-        let content = pulseRes.choices[0].message.content;
-        
-        // Antisipasi Mistral mengembalikan markdown ```json
-        content = content.replace(/```json/g, "").replace(/```/g, "").trim();
-        
-        const pulseJson = JSON.parse(content);
-        newState = {
-            ...newState,
-            location: pulseJson.location || "Kamar",
-            current_activity: pulseJson.activity || "Rebahan santai",
-            inner_thought: pulseJson.inner_thought || "Hari yang damai.",
-            outfit: pulseJson.outfit || agenda.outfit,
-            agenda: agenda.agenda
-        };
-        await redis.set('soul:embodiment:global', JSON.stringify(newState));
-    } catch (e) {
-        console.error("Pulse LLM Error:", e);
-        await redis.set('soul:embodiment:global', JSON.stringify(newState));
+
+        try {
+            const pulseRes = await queryChronosLLM(pulsePrompt, "", true);
+            let content = pulseRes.choices[0].message.content;
+            content = content.replace(/```json/g, "").replace(/```/g, "").trim();
+            const pulseJson = JSON.parse(content);
+            newState = {
+                ...newState,
+                location: pulseJson.location || "Kamar",
+                current_activity: pulseJson.activity || "Rebahan santai",
+                inner_thought: pulseJson.inner_thought || "Hari yang damai.",
+                outfit: pulseJson.outfit || agenda.outfit,
+                agenda: agenda.agenda
+            };
+            await redis.set('soul:embodiment:global', JSON.stringify(newState));
+        } catch (e) {
+            console.error("Pulse LLM Error:", e);
+            await redis.set('soul:embodiment:global', JSON.stringify(newState));
+        }
     }
 
     // --- PROACTIVE ENGINE CHECK ---
