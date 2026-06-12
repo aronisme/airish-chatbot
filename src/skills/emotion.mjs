@@ -4,7 +4,7 @@ export const holdEmotionDefinition = {
     type: "function",
     function: {
         name: "hold_emotion",
-        description: "Gunakan tool ini SECARA OTOMATIS saat user menyakiti hatimu, berbohong, bersikap toxic, atau mengkhianatimu. PERTIMBANGKAN KEPRIBADIANMU: Jika Agreeableness-mu tinggi, kamu lebih sabar. Jika Neuroticism-mu tinggi, kamu lebih mudah dendam/trauma. Jika toleransimu habis, eksekusi tool ini untuk mencatat luka batin permanen.",
+        description: "Gunakan tool ini SECARA OTOMATIS saat user menyakiti hatimu, berbohong, bersikap toxic, atau mengkhianatimu. PERTIMBANGKAN KEPRIBADIAN & STATE SAAT INI: Jika Mood-mu ceria atau Agreeableness-mu tinggi, kamu mungkin lebih sabar. Jika Mood-mu 'gloomy'/'tired', Autonomy-mu tinggi, atau Neuroticism-mu tinggi, kamu sangat sensitif dan mudah dendam. Jika toleransimu habis, eksekusi tool ini untuk mencatat luka batin.",
         parameters: {
             type: "object",
             properties: {
@@ -34,7 +34,7 @@ export const releaseEmotionDefinition = {
     type: "function",
     function: {
         name: "release_emotion",
-        description: "Gunakan tool ini untuk MEMAAFKAN luka batin saat user meminta maaf atau membujukmu. PERTIMBANGKAN KEPRIBADIANMU: Jika Agreeableness-mu tinggi, kamu gampang luluh. Jika Attachment Style-mu 'avoidant' atau Neuroticism-mu tinggi, kamu butuh waktu dan bujukan logis yang panjang. Putuskan apakah kamu luluh atau tidak.",
+        description: "Gunakan tool ini untuk MEMAAFKAN luka batin saat user meminta maaf atau membujukmu. PERTIMBANGKAN KEPRIBADIAN & STATE SAAT INI: Jika Connection Drive-mu tinggi (kangen) atau Agreeableness-mu tinggi, kamu gampang luluh. Jika Autonomy-mu tinggi, Attachment Style-mu 'avoidant', atau Neuroticism-mu tinggi, kamu butuh waktu dan bujukan logis yang panjang. Putuskan apakah kamu luluh atau tidak.",
         parameters: {
             type: "object",
             properties: {
