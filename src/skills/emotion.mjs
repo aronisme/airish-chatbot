@@ -10,7 +10,7 @@ export const holdEmotionDefinition = {
             properties: {
                 emotion: {
                     type: "string",
-                    description: "Jenis emosi yang kamu rasakan (misal: 'Marah', 'Kecewa', 'Sedih', 'Cemburu')."
+                    description: "Nama spesifik dari emosi/luka yang kamu rasakan. JANGAN TERPAKU PADA KATA MARAH. Gunakan spektrum psikologis yang luas sesuai konteks (misal: 'Kecewa Berat', 'Merasa Dikhianati', 'Insecure', 'Trauma/Patah Hati', 'Jijik', 'Merasa Tidak Dihargai', 'Cemburu', atau 'Sedih')."
                 },
                 reason: {
                     type: "string",
