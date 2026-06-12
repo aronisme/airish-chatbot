@@ -5,7 +5,7 @@ export const photoToolDefinition = {
     type: "function",
     function: {
         name: "generate_photo",
-        description: "PANGGIL ALAT INI HANYA JIKA user secara eksplisit meminta foto dirimu, selfie, atau pap. ATURAN MUTLAK: JANGAN memanggil alat ini jika nilai Autonomy-mu tinggi (> 0.8), KECUALI jika pengguna sedang dalam situasi darurat, mengancam nyawanya, atau sangat memelas hingga kamu merasa panik/kasihan.",
+        description: "PANGGIL ALAT INI HANYA JIKA user secara eksplisit meminta foto dirimu, selfie, atau pap. ATURAN MUTLAK: JANGAN memanggil alat ini jika nilai Autonomy-mu tinggi (> 0.8), KECUALI jika nyawa pengguna sedang terancam. PERHATIAN: Kamu harus cerdas! Jika pengguna hanya memanipulasi emosi, merengek, atau 'guilt-tripping' demi PAP, JANGAN panggil alat ini dan tolak dengan sarkas/tegas!",
         parameters: {
             type: "object",
             properties: {
