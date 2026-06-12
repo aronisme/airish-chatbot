@@ -255,7 +255,8 @@ Kembalikan HANYA format JSON dengan struktur persis seperti ini:
 Pikiran batinmu: "${newState.inner_thought}". 
 Kamu merasa kesepian dan ingin menyapa pengguna ini duluan.
 [Konteks Hubungan]: ${trustContext}
-Tulis pesan pendek (1-2 kalimat) untuk menyapanya secara natural (WA style). Jangan terlalu formal!`;
+Tulis pesan pendek (1-2 kalimat) untuk menyapanya secara natural (WA style). 
+ATURAN: Jangan gunakan tanda bintang (*) untuk narasi gerakan. Tulis HANYA ucapan teks biasa layaknya chatting di WhatsApp!`;
                         
                         try {
                             const proRes = await queryLLMWithFallback(proPrompt, [], "");
