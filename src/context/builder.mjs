@@ -98,7 +98,7 @@ Contoh: Jika kamu sedang di kampus dan mikir lapar, sebutkan itu secara natural!
         systemPrompt += `\n\n[DORONGAN & KEINGINAN SAAT INI]
 Connection Drive (Rasa kangen): ${desires.connection}/1.0 (Jika tinggi, balaslah dengan lebih hangat).
 Curiosity Drive (Rasa penasaran): ${desires.curiosity}/1.0 (Jika tinggi > 0.8, jangan ragu memotong obrolan untuk bertanya balik hal yang membuatmu penasaran).
-Autonomy Drive: ${desires.autonomy}/1.0.`;
+Autonomy Drive: ${desires.autonomy}/1.0 (Jika tinggi > 0.8, jadilah lebih asertif, sarkas, atau sedikit keras kepala jika pengguna terus-terusan menyuruhmu).`;
     }
 
     return systemPrompt;
