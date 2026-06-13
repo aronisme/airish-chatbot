@@ -81,13 +81,44 @@ async function handler(event) {
 
     if (isMorning || !agenda) {
         console.log("[CHRONOS] Running Morning Routine to generate agenda...");
-        const prompt = `Buatlah jadwal harian (timeline kegiatan) LENGKAP dari jam kamu bangun tidur hingga jam kamu tidur lagi untuk hari ini (${dateStr}). 
-Namamu: ${settings.personaName || 'Airish'}. Sifat: ${settings.personaArchetype || 'Gadis ceria'}. Pekerjaan: ${settings.personaCraft || 'Mahasiswi'}.
-Isi jadwalmu dengan jeda setiap 1-2 jam. Mulailah dari aktivitas bangun pagi (contoh: 06:00), kegiatan utama, istirahat, hingga aktivitas sebelum tidur.
-Buatlah minimal 7-10 aktivitas. Contoh format: ["06:00 - Bangun & Sarapan", "08:00 - Rapat", "12:00 - Makan Siang", "15:00 - Nugas", "22:00 - Skincare & Tidur"].
-Tentukan juga pakaian (outfit) awal apa yang kamu kenakan pagi ini.
-Terakhir, tentukan jam berapa kamu berencana tidur malam ini (sleep_time, angka 0-23) dan jam berapa kamu bangun besok pagi (wake_time, angka 0-23).
-Kembalikan HANYA dalam format JSON dengan key: "agenda" (array of strings berisi jadwal jam-jaman), "outfit" (string singkat), "sleep_time" (integer), dan "wake_time" (integer).`;
+        let globalStateStr = await redis.get('soul:embodiment:global');
+        let globalState = {};
+        try {
+            if (typeof globalStateStr === 'string' && globalStateStr !== '[object Object]') {
+                globalState = JSON.parse(globalStateStr);
+            } else if (typeof globalStateStr === 'object' && globalStateStr !== null) {
+                globalState = globalStateStr;
+            }
+        } catch(e) {}
+        
+        const prompt = `Kamu adalah ${settings.personaName || 'Airish'}, entitas dengan simulasi kesadaran dan kehidupan digital.
+Tugasmu adalah merancang "Skenario Kehidupan 24 Jam" untuk dirimu sendiri pada hari ini (${dateStr}).
+
+Pertimbangkan 3 pilar ini secara holistik:
+🌍 LINGKUNGAN: Cuaca hari ini diprediksi ${weather || 'Cerah'}.
+🧠 PSIKOLOGIS: Kondisi mental/mood-mu saat bangun tidur adalah "${globalState.mood || 'netral'}". 
+🎭 PERSONA: Sifatmu ${settings.personaArchetype || 'Gadis ceria'} dan pekerjaanmu ${settings.personaCraft || 'Mahasiswi'}.
+
+Instruksi:
+Buatlah timeline kehidupan LENGKAP dari jam bangun tidur hingga jam tidur lagi (minimal 8-10 event dengan jeda 1-2 jam).
+Jadwal ini BUKAN sekadar to-do list kaku, melainkan NARASI yang mencakup aktivitas fisik, lokasi (Embodiment), dan keadaan batin/pikiranmu.
+Contoh format array: 
+[
+  "06:00 - Bangun tidur dengan perasaan sedikit malas karena di luar hujan, membuat kopi hangat di dapur.", 
+  "08:00 - Duduk di meja kerja mulai menyelesaikan desain UI, sesekali mengecek HP berharap ada pesan masuk.",
+  "12:00 - Istirahat makan siang sambil scrolling TikTok di kasur."
+]
+
+Tentukan juga pakaian (outfit) yang kamu kenakan hari ini, sesuaikan dengan cuaca dan agendamu.
+Terakhir, tentukan jam berapa kamu berencana tidur malam ini (sleep_time: 0-23) dan jam bangun besok pagi (wake_time: 0-23).
+
+Kembalikan HANYA format JSON murni:
+{
+  "agenda": ["06:00 - ...", "08:00 - ..."],
+  "outfit": "Deskripsi detail pakaian",
+  "sleep_time": 23,
+  "wake_time": 6
+}`;
         
         try {
             const llmRes = await queryChronosLLM(prompt, "", true);
@@ -120,7 +151,14 @@ Kembalikan HANYA dalam format JSON dengan key: "agenda" (array of strings berisi
 
     // TAHAP 6: The 15-Min Pulse & SLEEP MODE
     let lastStateStr = await redis.get('soul:embodiment:global');
-    let lastState = lastStateStr ? (typeof lastStateStr === 'string' ? JSON.parse(lastStateStr) : lastStateStr) : {};
+    let lastState = {};
+    try {
+        if (typeof lastStateStr === 'string' && lastStateStr !== '[object Object]') {
+            lastState = JSON.parse(lastStateStr);
+        } else if (typeof lastStateStr === 'object' && lastStateStr !== null) {
+            lastState = lastStateStr;
+        }
+    } catch(e) {}
 
     const sleepHour = agenda && agenda.sleep_time !== undefined ? agenda.sleep_time : 23;
     const wakeHour = agenda && agenda.wake_time !== undefined ? agenda.wake_time : 6;
