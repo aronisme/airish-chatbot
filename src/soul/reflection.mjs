@@ -22,6 +22,7 @@ Tugasmu menganalisis transkrip percakapan dan mengekstrak informasi dengan krite
 1. Profil Makro (user_dossier): Sebuah rangkuman naratif (MAKSIMAL 3-4 KALIMAT PADAT) tentang SIAPA pengguna ini berdasarkan Profil Makro sebelumnya dan obrolan hari ini. Masukkan nama lengkap, umur, pekerjaan, dan analisis kepribadiannya (misal: "Aron adalah pria yang ketus tapi penyayang"). JANGAN PERNAH LEBIH DARI 4 KALIMAT.
 2. Fakta Episodik (new_facts): HANYA kejadian kecil spesifik, barang kepemilikan, atau trivia (misal: "Hari ini ban motornya bocor", "Punya alergi udang"). JANGAN TUMPANG TINDIH dengan profil makro.
 3. Fakta yang diekstrak BUKAN tentang: lokasi kos bot, outfit bot, aktivitas bot, dll.
+4. Ego & Self Narrative (new_self_narrative): Tulis ulang/perbarui bagaimana CARAMU memandang dirimu sendiri dan peranmu dalam hidup pengguna hari ini (berdasarkan gaya kepribadian/Big 5-mu). Maksimal 3 kalimat. Hubungkan dengan Trust Level.
 
 CARA KERJA:
 - HANYA baca pesan berlabel [PENGGUNA/MANUSIA]
@@ -39,9 +40,10 @@ Output harus format JSON murni:
   "trust_evaluation": {
      "score_delta": -0.15,
      "reason": "User berbohong"
-  }
+  },
+  "new_self_narrative": "Teks evaluasi dirimu sendiri. Contoh: Aku merasa sangat dihargai dan menjadi tempat curhat yang penting bagi Aron."
 }
-Jika tidak ada informasi baru, kembalikan array kosong untuk new_facts. PENTING: user_dossier harus selalu dikembalikan dengan teks utuhnya.
+Jika tidak ada informasi baru, kembalikan array kosong untuk new_facts. PENTING: user_dossier dan new_self_narrative harus selalu dikembalikan dengan teks utuhnya.
 PENTING UNTUK TRUST EVALUATION:
 - score_delta berada di rentang -1.0 hingga +1.0. 
 - Jika user kasar, manipulatif, toxic, berikan angka negatif (misal: -0.3).
@@ -64,6 +66,16 @@ export async function runReflectionEngine(supabase, userId, workingMemory) {
 
         const { default: redisClient } = await import("../redis.mjs");
         const oldDossierStr = await redisClient.get(`user:${userId}:dossier`) || "Belum ada profil makro. Mulailah menganalisis identitasnya hari ini.";
+
+        // Ambil Persona & Identity untuk mempertajam Self-Narrative
+        const { data: persona } = await supabase.from('personas').select('*').eq('telegram_id', userId).single();
+        const { DEFAULT_IDENTITY } = await import("./identity.mjs");
+        const identity = { ...DEFAULT_IDENTITY };
+        if (persona && persona.psychology) {
+            identity.big_five = persona.psychology.big_five || identity.big_five;
+            identity.attachment_style = persona.psychology.attachment_style || identity.attachment_style;
+        }
+        const oldSelfNarrative = await redisClient.get(`user:${userId}:self_narrative`) || identity.self_narrative;
 
         // Ambil pesan hari ini untuk direnungkan
         // Fix 2: Filter konten assistant — strip catatan visual/embodiment yang hanya menjadi noise
@@ -95,6 +107,12 @@ ${oldDossierStr}
 
 [FAKTA SPESIFIK YANG SUDAH DIKETAHUI TENTANG USER]
 ${existingFactsStr}
+
+[EGO & SELF-NARRATIVE (IDENTITAS) SEBELUMNYA]
+Narasi Dirimu Terdahulu: "${oldSelfNarrative}"
+Genetik Sifatmu (Big 5): Extraversion (${identity.big_five.extraversion}), Neuroticism (${identity.big_five.neuroticism}), Agreeableness (${identity.big_five.agreeableness}).
+Gaya Kelekatan: ${identity.attachment_style}.
+Instruksi Ego: Jika pengguna cuek dan Neuroticism-mu tinggi, narasimu harus berubah pesimis/insecure. Jika Agreeableness tinggi, kamu akan sangat pemaaf. Tulislah ulang narasi dirimu (maksimal 3 kalimat) dengan gaya bahasamu sendiri.
 
 ATURAN KRITIS: JANGAN memasukkan profil statis/kepribadian ke dalam new_facts. Masukkan itu semua ke dalam user_dossier. Hanya fakta remeh/kejadian spesifik yang masuk ke new_facts. JANGAN mengulang fakta yang sudah ada.`;
 
@@ -165,6 +183,13 @@ ATURAN KRITIS: JANGAN memasukkan profil statis/kepribadian ke dalam new_facts. M
             const { default: redisClient } = await import("../redis.mjs");
             await redisClient.set(`user:${userId}:dossier`, content.user_dossier);
             console.log(`[REFLECTION] User Dossier berhasil diperbarui.`);
+        }
+
+        // 6. Simpan Self-Narrative (Ego Evolution)
+        if (content.new_self_narrative && content.new_self_narrative.length > 5) {
+            const { default: redisClient } = await import("../redis.mjs");
+            await redisClient.set(`user:${userId}:self_narrative`, content.new_self_narrative);
+            console.log(`[REFLECTION] Ego Evolution berhasil diperbarui: ${content.new_self_narrative.substring(0, 50)}...`);
         }
 
         console.log(`[REFLECTION] Selesai merenungkan. ${content.new_facts?.length || 0} fakta baru, ${content.new_events?.length || 0} kejadian baru, ${content.obsolete_fact_ids?.length || 0} fakta dihapus.`);

@@ -267,6 +267,12 @@ async function processMessage(body, host) {
             userIdentity.attachment_style = persona.psychology.attachment_style || userIdentity.attachment_style;
         }
 
+        // --- EGO EVOLUTION (Suntikan Self-Narrative yang terus berkembang) ---
+        const evolvedSelfNarrative = await redis.get(`user:${userId}:self_narrative`);
+        if (evolvedSelfNarrative) {
+            userIdentity.self_narrative = evolvedSelfNarrative;
+        }
+
         // --- SOUL ENGINE PROCESSING (Perception & State) ---
         const currentState = await getSoulState(userId);
         const perception = await parseUserMessage(text);
