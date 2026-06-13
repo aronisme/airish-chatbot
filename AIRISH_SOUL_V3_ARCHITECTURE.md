@@ -340,4 +340,19 @@ Big Five (O:0.7, C:0.4, E:0.8, A:0.7, N:0.6), Attachment: anxious-secure, Defaul
 
 ---
 
+## 11. Dashboard & Entitas Control (`public/soul.html`)
+
+Sistem menyediakan dasbor "God Mode" bagi *developer/admin* untuk memonitor telemetri dan memanipulasi jiwa AI secara instan.
+
+1. **AI Persona Creator (`api/soul-generate.js`):**
+   Memungkinkan penciptaan karakter dengan prompt teks (natural language). Proses diproses oleh `queryChronosLLM()` dengan regex isolation yang ketat untuk menerjemahkan teks menjadi pilar Lingkungan, Big 5 (Psikologi), dan Persona Archetype berformat JSON. Mendukung Vercel `maxDuration: 60` untuk mengatasi latensi inferensi.
+   
+2. **Soul Reset / Kill Entity (`api/soul-reset.js`):**
+   Tombol pemusnah (*Wipe Memory*) yang menghapus seluruh data pada Supabase (`memories`, `episodic_memories`) dan 7 variabel krusial Redis (`working_memory`, `soul_state`, `trust_level`, `baggage`, `dossier`, `self_narrative`, `active_goal`) spesifik untuk satu Telegram ID, sehingga pengguna mendapat entitas baru dari nol.
+
+3. **Multi-User Encapsulation:**
+   Dashboard memuat data massal, tetapi fitur URL Parameter `?user_id=...` yang diteruskan dari bot Telegram melalui perintah `/setting` akan memfilter kartu telemetri hanya untuk *user* yang bersangkutan.
+
+---
+
 *Dokumentasi ini dihasilkan dari deep review seluruh source code pada 2026-06-13.*

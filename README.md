@@ -26,6 +26,8 @@
    Rotasi acak multi-provider: **Mistral Large** (Utama untuk Chat & Tools), **Groq Llama 3.3 70B & 3.1 8B**, dan **Qwen Turbo** (Alibaba Cloud) sebagai pertahanan terakhir, didukung dengan mekanisme *multi-API Key rotation*.
 6. **Dashboard Ter-enkapsulasi & Perintah `/setting`:**
    Mendukung kontrol privasi multi-user. Pengguna dapat mengetik `/setting` di Telegram untuk menerima tautan khusus (`?user_id=...`). Halaman telemetri dashboard otomatis melakukan penyaringan untuk menyajikan data khusus milik pengguna tersebut.
+7. **AI Persona Creator & Factory Reset:**
+   Pengguna dapat membangkitkan (mendesain ulang secara instan menggunakan AI Creator) atau membunuh (menghapus paksa seluruh memori, dendam, dan identitas) entitas spesifik dari dalam Dashboard, memungkinkan reinkarnasi penuh karakter AI tanpa menyentuh kode server.
 
 ---
 
