@@ -2,6 +2,7 @@ import redis from '../src/redis.mjs';
 import { json, vercelHandler } from "../src/http.mjs";
 import { createClient } from "@supabase/supabase-js";
 import { queryChronosLLM, queryLLMWithFallback } from "../src/llm.mjs";
+import { runSleepCycle } from "./sleep-cycle.js";
 
 const supabaseUrl = process.env.SUPABASE_URL || "https://dummy.supabase.co";
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || "dummy_key";
@@ -169,6 +170,22 @@ Kembalikan HANYA format JSON murni:
     } else {
         // Shift malam/begadang ekstrim (misal tidur jam 2 pagi, bangun jam 10 pagi)
         isSleepTime = currentHour >= sleepHour && currentHour < wakeHour;
+    }
+
+    // TAHAP 6.5: DYNAMIC REFLECTION TRIGGER
+    // Jalankan konsolidasi memori persis di jam dia mulai tidur
+    if (currentHour === sleepHour) {
+        let hasReflectedToday = await redis.get('soul:chronos:reflected_date');
+        if (hasReflectedToday !== dateStr) {
+            console.log(`[CHRONOS] Waktunya tidur! Men-trigger Sleep Cycle (Reflection)...`);
+            await redis.set('soul:chronos:reflected_date', dateStr);
+            try {
+                await runSleepCycle();
+            } catch(e) {
+                console.error("[CHRONOS] Gagal run sleep cycle:", e);
+                await redis.del('soul:chronos:reflected_date'); // Biar dicoba lagi
+            }
+        }
     }
 
     // Cek apakah dia sedang dipaksa bangun (karena baru saja diajak chat oleh user)

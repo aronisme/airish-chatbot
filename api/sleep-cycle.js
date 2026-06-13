@@ -8,17 +8,12 @@ const supabaseUrl = process.env.SUPABASE_URL || "https://dummy.supabase.co";
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || "dummy_key";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-async function handler(event) {
-    if (event.httpMethod !== 'POST') {
-        return json(405, { error: 'Method not allowed' });
-    }
-
+export async function runSleepCycle() {
     console.log("[SLEEP CYCLE] Memulai proses konsolidasi memori malam hari...");
 
-    try {
-        // Ambil semua user aktif (limit 5 untuk mencegah timeout Vercel)
-        const { data: users } = await supabase.from('users').select('telegram_id').limit(5);
-        if (!users) return json(200, { ok: true, msg: "No users found" });
+    // Ambil semua user aktif (limit 5 untuk mencegah timeout Vercel)
+    const { data: users } = await supabase.from('users').select('telegram_id').limit(5);
+    if (!users) return;
 
         for (const user of users) {
             const userId = user.telegram_id;
@@ -84,8 +79,16 @@ async function handler(event) {
         }
 
         console.log("[SLEEP CYCLE] Selesai!");
-        return json(200, { ok: true });
+}
 
+async function handler(event) {
+    if (event.httpMethod !== 'POST') {
+        return json(405, { error: 'Method not allowed' });
+    }
+
+    try {
+        await runSleepCycle();
+        return json(200, { ok: true });
     } catch (error) {
         console.error("[SLEEP CYCLE] Error:", error);
         return json(500, { error: error.message });
