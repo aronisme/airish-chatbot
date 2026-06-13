@@ -39,7 +39,7 @@ export async function parseUserMessage(userMessage) {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "qwen/qwen3-32b",
+                model: "llama-3.3-70b-versatile",
                 messages: [
                     { role: "system", content: PERCEPTION_SYSTEM_PROMPT },
                     { role: "user", content: userMessage }

@@ -210,20 +210,7 @@ Kembalikan HANYA format JSON murni:
             last_updated: now.getTime()
         };
         await redis.set('soul:embodiment:global', JSON.stringify(newState));
-
-        // Cek apakah Reflection Malam sudah dijalankan hari ini
-        const todayDateStr = now.toLocaleDateString("en-US", { timeZone: "Asia/Jakarta" });
-        const lastSleepReflection = await redis.get('soul:chronos:last_reflection_date');
-
-        if (lastSleepReflection !== todayDateStr) {
-            console.log("[CHRONOS] Triggering Background Nightly Reflection...");
-            await redis.set('soul:chronos:last_reflection_date', todayDateStr);
-            
-            // Tembak endpoint terpisah secara background agar Vercel tidak timeout
-            const host = event.headers.host || "localhost:3000";
-            const protocol = host.includes('localhost') ? 'http' : 'https';
-            fetch(`${protocol}://${host}/api/sleep-cycle`, { method: 'POST' }).catch(e => console.error(e));
-        }
+        // Reflection malam kini ditangani oleh TAHAP 6.5 (Dynamic Reflection Trigger) di atas.
     } else {
         console.log("[CHRONOS] Running 15-Min Pulse (Inner Monologue)...");
         const activeContext = await redis.get('soul:chronos:active_context');

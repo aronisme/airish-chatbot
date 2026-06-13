@@ -110,7 +110,7 @@ ATURAN KRITIS: JANGAN memasukkan profil statis/kepribadian ke dalam new_facts. M
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "qwen/qwen3-32b", // Pakai model Qwen 32B untuk akurasi ekstraksi memori
+                model: "llama-3.3-70b-versatile", // Model stabil untuk akurasi ekstraksi memori
                 messages: [
                     { role: "system", content: dynamicPrompt },
                     { role: "user", content: conversationString }
