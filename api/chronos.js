@@ -81,9 +81,10 @@ async function handler(event) {
 
     if (isMorning || !agenda) {
         console.log("[CHRONOS] Running Morning Routine to generate agenda...");
-        const prompt = `Buatlah jadwal harian (timeline kegiatan) yang realistis untuk hari ini (${dateStr}). 
+        const prompt = `Buatlah jadwal harian (timeline kegiatan) LENGKAP dari jam kamu bangun tidur hingga jam kamu tidur lagi untuk hari ini (${dateStr}). 
 Namamu: ${settings.personaName || 'Airish'}. Sifat: ${settings.personaArchetype || 'Gadis ceria'}. Pekerjaan: ${settings.personaCraft || 'Mahasiswi'}.
-Buatlah setidaknya 4-5 aktivitas utama beserta perkiraan jamnya (contoh: ["09:00 - Rapat Klien", "13:00 - Makan siang di luar", "15:00 - Nugas", "20:00 - Nonton Netflix"]).
+Isi jadwalmu dengan jeda setiap 1-2 jam. Mulailah dari aktivitas bangun pagi (contoh: 06:00), kegiatan utama, istirahat, hingga aktivitas sebelum tidur.
+Buatlah minimal 7-10 aktivitas. Contoh format: ["06:00 - Bangun & Sarapan", "08:00 - Rapat", "12:00 - Makan Siang", "15:00 - Nugas", "22:00 - Skincare & Tidur"].
 Tentukan juga pakaian (outfit) awal apa yang kamu kenakan pagi ini.
 Terakhir, tentukan jam berapa kamu berencana tidur malam ini (sleep_time, angka 0-23) dan jam berapa kamu bangun besok pagi (wake_time, angka 0-23).
 Kembalikan HANYA dalam format JSON dengan key: "agenda" (array of strings berisi jadwal jam-jaman), "outfit" (string singkat), "sleep_time" (integer), dan "wake_time" (integer).`;

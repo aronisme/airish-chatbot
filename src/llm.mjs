@@ -103,7 +103,7 @@ function getRandomGroqKey() {
     return groqKeys[Math.floor(Math.random() * groqKeys.length)];
 }
 
-export async function queryGroq(systemPrompt, userMessage = "", jsonMode = false) {
+export async function queryGroq(systemPrompt, userMessage = "", jsonMode = false, modelName = "llama-3.3-70b-versatile") {
     const apiKey = getRandomGroqKey();
     const url = "https://api.groq.com/openai/v1/chat/completions";
 
@@ -115,7 +115,7 @@ export async function queryGroq(systemPrompt, userMessage = "", jsonMode = false
     }
 
     const body = {
-        model: "llama-3.3-70b-versatile",
+        model: modelName,
         messages,
     };
     if (jsonMode) {
@@ -133,15 +133,30 @@ export async function queryGroq(systemPrompt, userMessage = "", jsonMode = false
 
 /**
  * LLM khusus untuk Chronos Engine (background tasks).
- * Utama: Groq (Qwen3-32B) - Cepat & murah.
- * Fallback: Qwen Turbo (Alibaba) jika Groq gagal.
+ * Rotasi model untuk mencegah rate limit dan down time.
  */
 export async function queryChronosLLM(systemPrompt, userMessage = "", jsonMode = false) {
-    try {
-        console.log('[CHRONOS LLM] Menggunakan Groq Qwen3-32B...');
-        return await queryGroq(systemPrompt, userMessage, jsonMode);
-    } catch (error) {
-        console.warn('[CHRONOS LLM] Groq gagal, fallback ke Qwen Turbo:', error.message);
-        return await queryQwen(systemPrompt, [], userMessage, null, jsonMode);
+    const providers = ['groq_llama', 'qwen_turbo', 'groq_gemma'];
+    let startIndex = Math.floor(Math.random() * providers.length);
+    let lastError = null;
+
+    for (let i = 0; i < providers.length; i++) {
+        const provider = providers[(startIndex + i) % providers.length];
+        console.log(`[CHRONOS LLM] Mencoba provider: ${provider}...`);
+        
+        try {
+            if (provider === 'groq_llama') {
+                return await queryGroq(systemPrompt, userMessage, jsonMode, "llama-3.3-70b-versatile");
+            } else if (provider === 'groq_gemma') {
+                return await queryGroq(systemPrompt, userMessage, jsonMode, "llama-3.1-8b-instant");
+            } else if (provider === 'qwen_turbo') {
+                return await queryQwen(systemPrompt, [], userMessage, null, jsonMode);
+            }
+        } catch (error) {
+            console.warn(`[CHRONOS LLM] Provider ${provider} gagal: ${error.message}`);
+            lastError = error;
+        }
     }
+
+    throw new Error(`Semua provider Chronos LLM gagal! Error terakhir: ${lastError?.message}`);
 }
