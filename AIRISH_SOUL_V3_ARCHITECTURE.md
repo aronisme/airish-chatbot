@@ -85,7 +85,7 @@ User Chat Masuk
     ├── User Dossier (profil makro)
     └── Trust Level
   ↓
-[6] Perception Parser (Groq `qwen/qwen3-32b`, JSON mode)
+[6] Perception Parser (Multi-LLM rotation `queryChronosLLM()`, JSON mode)
     → Menghasilkan: intent, emotion, hostility, engagement, topic_shift
   ↓
 [7] Soul Engine (NON-LLM, deterministik):
@@ -179,7 +179,7 @@ Per user:
   [3] Jika > 5 pesan → runReflectionEngine():
       ├── Ambil fakta lama + dossier lama dari DB
       ├── Format chat dengan label [PENGGUNA/MANUSIA] vs [BOT/AI - ABAIKAN]
-      ├── Kirim ke Groq `qwen/qwen3-32b` (JSON mode)
+      ├── Kirim ke Multi-LLM rotation `queryChronosLLM()` (JSON mode)
       ├── Output: { user_dossier, new_facts[], new_events[], obsolete_fact_ids[], trust_evaluation }
       ├── Filter AI facts (blocklist: "kos", "piyama", "outfit", dll)
       ├── Simpan new_facts ke Supabase `memories`
@@ -226,9 +226,9 @@ Per user:
 | Fungsi | Provider Utama | Fallback | Penggunaan |
 |--------|---------------|----------|------------|
 | `queryLLMWithFallback()` | Mistral Large | Qwen Turbo | Chat utama (webhook) |
-| `queryChronosLLM()` | Random rotation (4 provider) | Auto-fallback | Background tasks (Chronos) |
-| `parseUserMessage()` | Groq `qwen/qwen3-32b` | Hardcoded default | Perception (intent/emosi) |
-| `runReflectionEngine()` | Groq `qwen/qwen3-32b` | - | Konsolidasi memori malam |
+| `queryChronosLLM()` | Random rotation (4 provider) | Auto-fallback | Background tasks + Parser + Reflection |
+| `parseUserMessage()` | `queryChronosLLM()` (Rotasi) | Default static object | Perception (intent/emosi) |
+| `runReflectionEngine()` | `queryChronosLLM()` (Rotasi) | - | Konsolidasi memori malam |
 | `analyzeImage()` | Groq `llama-4-scout` | - | Vision/deskripsi foto |
 | `getMistralEmbedding()` | Mistral Embed | - | Vector embedding untuk RAG |
 
@@ -269,27 +269,23 @@ Big Five (O:0.7, C:0.4, E:0.8, A:0.7, N:0.6), Attachment: anxious-secure, Defaul
 
 ---
 
-## 8. Bug & Cacat Logika yang Terdeteksi
+## 8. Bug & Cacat Logika yang Berhasil Diperbaiki (Update: 2026-06-13)
 
-### 🔴 KRITIS
+### ✅ SOLVED / FIXED (Selesai Diperbaiki)
 
-1. **Perception Parser pakai model `qwen/qwen3-32b` yang mungkin di-decommission.**
-   - File: `src/perception/parser.mjs:42`
-   - Risiko: Jika Groq menghapus model ini, SEMUA pesan masuk akan fallback ke persepsi default (emotion: neutral, intent: other). Ini melumpuhkan seluruh Soul Engine.
-   - Fix: Gunakan model stabil (`llama-3.3-70b-versatile`) atau tambahkan fallback.
+1. **Perception Parser & Reflection Engine Migrasi dari `qwen/qwen3-32b` ke Rotasi `queryChronosLLM()`**
+   - **Masalah:** Menggunakan model eksperimental statis yang rentan dihapus (*decommission*) oleh Groq.
+   - **Solusi:** Dimigrasikan menggunakan fungsi rotasi multi-provider `queryChronosLLM()` yang secara dinamis mencoba Groq Llama, Qwen Alibaba, dan Mistral secara bergantian jika terjadi kegagalan.
 
-2. **Reflection Engine juga pakai `qwen/qwen3-32b`.**
-   - File: `src/soul/reflection.mjs:113`
-   - Risiko: Sama — konsolidasi memori malam gagal total jika model dihapus.
-   - Fix: Gunakan `queryChronosLLM()` yang sudah punya rotation.
+2. **Duplikat Reflection Trigger di Chronos**
+   - **Masalah:** Terjadi eksekusi ganda `runSleepCycle()` secara sinkronus di TAHAP 6.5 dan secara asinkronus via HTTP fetch di blok Sleep Mode, menyebabkan pemborosan daya komputasi dan memotong dendam (*emotional baggage*) dua kali lebih cepat.
+   - **Solusi:** Logika HTTP fetch dicabut, menyisakan *single source of truth* pemicu sinkronus pada TAHAP 6.5.
 
-3. **Duplikat Reflection Trigger di Chronos.**
-   - `chronos.js:175-189` (TAHAP 6.5) memanggil `runSleepCycle()` langsung.
-   - `chronos.js:214-226` (di dalam Sleep Mode) JUGA memanggil `/api/sleep-cycle` via HTTP.
-   - Risiko: Reflection bisa berjalan **DUA KALI** dalam satu malam (sekali saat masuk jam tidur, sekali saat pulse berikutnya). Ini menyebabkan duplikasi fakta dan trust delta double-counted.
-   - Fix: Hapus salah satu. Legacy HTTP trigger (baris 214-226) sebaiknya dihapus.
+3. **Duplikasi Informasi Dashboard Telemetri (Soul State Per User)**
+   - **Masalah:** Dashboard telemetri menumpuk data seluruh pengguna di satu layar admin secara global.
+   - **Solusi:** Ditambahkan perintah `/setting` di Telegram yang mengembalikan URL dashboard terenkapsulasi parameter privat `?user_id=...` sehingga dashboard otomatis menyaring dan menampilkan data milik pengguna tersebut saja.
 
-### 🟡 SEDANG
+### 🟡 OUTSTANDING / DIAGNOSED (Sedang Dipantau)
 
 4. **`soul:chronos:reflected_date` vs `soul:chronos:last_reflection_date` — dua key berbeda untuk tujuan sama.**
    - Satu diset di TAHAP 6.5 (baris 181), satu lagi di Sleep Mode (baris 220).
@@ -305,8 +301,8 @@ Big Five (O:0.7, C:0.4, E:0.8, A:0.7, N:0.6), Attachment: anxious-secure, Defaul
 
 ### 🟢 MINOR
 
-7. **`getRandomGroqKey()` diduplikasi di 3 file** (`parser.mjs`, `reflection.mjs`, `vision.mjs`).
-   - Sebaiknya dipusatkan di `src/llm.mjs` dan diimpor.
+7. **`getRandomGroqKey()` diduplikasi di `vision.mjs`**
+   - Sebaiknya dipusatkan di `src/llm.mjs` dan diimpor (sudah dihapus dari `parser.mjs` dan `reflection.mjs` karena menggunakan `queryChronosLLM`).
 
 8. **QWEN_API_KEY hardcoded sebagai fallback** di `llm.mjs:50` dan `webhook-telegram.js:98`.
    - Tidak berbahaya di production (env var akan override), tapi sebaiknya dihapus dari source code.
