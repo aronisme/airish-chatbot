@@ -131,7 +131,7 @@ Kembalikan HANYA format JSON murni:
             const resJson = JSON.parse(content.trim());
             let agendaText = resJson.agenda || "Sibuk nugas";
             if (Array.isArray(agendaText)) {
-                agendaText = agendaText.map(item => typeof item === 'object' ? Object.values(item).join(' - ') : item).join(', ');
+                agendaText = agendaText.map(item => typeof item === 'object' ? Object.values(item).join(' - ') : item).join('\n');
             } else if (typeof agendaText === 'object') {
                 agendaText = JSON.stringify(agendaText);
             }
