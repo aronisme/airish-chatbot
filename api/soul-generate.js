@@ -10,32 +10,32 @@ const GENERATOR_PROMPT = `Kamu adalah ahli pembuat karakter fiksi dan psikolog k
 Tugasmu adalah merancang karakter bot berdasarkan deskripsi dari pengguna, dan mengubahnya menjadi variabel-variabel pengaturan.
 Pertimbangkan 3 pilar: Lingkungan, Persona, dan Psikologis (terutama Big 5).
 
-Output harus berupa format JSON MURNI (tanpa markdown, tanpa blok kode) dengan struktur berikut:
+Output harus berupa format JSON MURNI tanpa blok markdown dan TANPA KOMENTAR apapun (DILARANG KERAS MENGGUNAKAN SIMBOL //) dengan struktur berikut:
 {
   "homeCity": "Kota tempat tinggal, Negara",
-  "sleepTime": "JJ:MM",
-  "wakeTime": "JJ:MM",
+  "sleepTime": "01:00",
+  "wakeTime": "07:00",
   "hobbies": "Hobi 1, Hobi 2, Hobi 3",
-  "clinginess": 8, // Skala 1-10
-  "curiosity": 6, // Skala 1-10
-  "proactive": true, // boolean
+  "clinginess": 8,
+  "curiosity": 6,
+  "proactive": true,
   "personaName": "Nama karakter",
-  "personaArchetype": "Contoh: Gadis 22th, ekstrovert, super manja, penyayang",
-  "personaCraft": "Pekerjaan/Status (misal: Mahasiswi DKV)",
-  "personaBackstory": "Cerita latar belakang singkat (1-2 kalimat)",
-  "personaWorld": "Konteks tempat tinggal (misal: Kos estetik di Jakarta)",
+  "personaArchetype": "Gadis 22th, ekstrovert, super manja, penyayang",
+  "personaCraft": "Mahasiswi DKV",
+  "personaBackstory": "Cerita latar belakang",
+  "personaWorld": "Konteks tempat tinggal",
   "psychology": {
     "big_five": {
-      "openness": 0.7, // Skala 0.0 - 1.0
+      "openness": 0.7,
       "conscientiousness": 0.4,
       "extraversion": 0.8,
       "agreeableness": 0.7,
       "neuroticism": 0.6
     },
-    "attachment_style": "anxious-secure" // pilih salah satu: secure, anxious, avoidant, anxious-secure
+    "attachment_style": "anxious-secure"
   }
 }
-Pastikan seluruh field terisi berdasarkan interpretasi dari deskripsi pengguna.`;
+Pastikan seluruh field terisi.`;
 
 async function handler(event) {
     if (event.httpMethod !== 'POST') {
@@ -57,7 +57,9 @@ async function handler(event) {
         else if (content.startsWith('```')) content = content.substring(3);
         if (content.endsWith('```')) content = content.substring(0, content.length - 3);
 
-        const newSettings = JSON.parse(content.trim());
+        // Hapus komentar inline (//...) yang mungkin masih disisipkan LLM agar JSON.parse tidak gagal
+        let safeJson = content.replace(/\/\/[^\n]*\n/g, '\n').replace(/\/\/[^\n]*$/g, '');
+        const newSettings = JSON.parse(safeJson.trim());
         
         // Simpan langsung ke database (seolah user yang menekan tombol Simpan)
         const payload = {
