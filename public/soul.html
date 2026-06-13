@@ -563,33 +563,46 @@
                 if(data.userStates && data.userStates.length > 0) {
                     const container = document.getElementById('user-states-container');
                     container.innerHTML = '';
-                    data.userStates.forEach(u => {
-                        const card = document.createElement('div');
-                        card.className = 'telemetry-card';
-                        card.style.borderColor = '#f472b6';
-                        card.style.boxShadow = '0 0 10px rgba(244, 114, 182, 0.3)';
-                        card.style.marginBottom = '10px';
-                        card.innerHTML = `
-                            <div class="telemetry-item"><span>User ID</span><span class="value" style="color:#f472b6">${u.telegram_id}</span></div>
-                            <div class="telemetry-item"><span>Mood</span><span class="value" style="color:#f472b6">${u.mood || '-'}</span></div>
-                            <div class="telemetry-item"><span>Energy</span><span class="value" style="color:#f472b6">${u.energy || '-'}/100</span></div>
-                            <div class="telemetry-item"><span>Trust Level (Percaya)</span><span class="value" style="color:#4ade80">${u.trust_level !== undefined ? (u.trust_level * 100).toFixed(0) : 30}%</span></div>
-                            <div class="telemetry-item"><span>Connection (Kangen)</span><span class="value" style="color:#f472b6">${u.desires?.connection ?? '-'}</span></div>
-                            <div class="telemetry-item"><span>Curiosity (Kepo)</span><span class="value" style="color:#f472b6">${u.desires?.curiosity ?? '-'}</span></div>
-                            <div class="telemetry-item"><span>Autonomy</span><span class="value" style="color:#f472b6">${u.desires?.autonomy ?? '-'}</span></div>
-                            <div style="margin-top: 15px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 10px;">
-                                <div style="margin-bottom: 10px; font-size: 0.85rem;">
-                                    <span style="font-weight: 600; color: #ef4444;">💔 Luka Batin (Baggage):</span>
-                                    ${(u.baggage && u.baggage.length > 0) ? u.baggage.map(b => `<div style="margin-left: 10px; color: #fca5a5; font-size: 0.8rem;">- [${b.emotion}] Level ${b.intensity}/10 : "${b.reason}"</div>`).join('') : '<span style="color: #4ade80;">Tidak ada dendam</span>'}
+                    
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const queryUserId = urlParams.get('user_id');
+
+                    let filteredUsers = data.userStates;
+                    if (queryUserId) {
+                        filteredUsers = data.userStates.filter(u => u.telegram_id.toString() === queryUserId);
+                    }
+
+                    if (filteredUsers.length === 0) {
+                        container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada data soul state untuk user ini.</p>';
+                    } else {
+                        filteredUsers.forEach(u => {
+                            const card = document.createElement('div');
+                            card.className = 'telemetry-card';
+                            card.style.borderColor = '#f472b6';
+                            card.style.boxShadow = '0 0 10px rgba(244, 114, 182, 0.3)';
+                            card.style.marginBottom = '10px';
+                            card.innerHTML = `
+                                <div class="telemetry-item"><span>User ID</span><span class="value" style="color:#f472b6">${u.telegram_id}</span></div>
+                                <div class="telemetry-item"><span>Mood</span><span class="value" style="color:#f472b6">${u.mood || '-'}</span></div>
+                                <div class="telemetry-item"><span>Energy</span><span class="value" style="color:#f472b6">${u.energy || '-'}/100</span></div>
+                                <div class="telemetry-item"><span>Trust Level (Percaya)</span><span class="value" style="color:#4ade80">${u.trust_level !== undefined ? (u.trust_level * 100).toFixed(0) : 30}%</span></div>
+                                <div class="telemetry-item"><span>Connection (Kangen)</span><span class="value" style="color:#f472b6">${u.desires?.connection ?? '-'}</span></div>
+                                <div class="telemetry-item"><span>Curiosity (Kepo)</span><span class="value" style="color:#f472b6">${u.desires?.curiosity ?? '-'}</span></div>
+                                <div class="telemetry-item"><span>Autonomy</span><span class="value" style="color:#f472b6">${u.desires?.autonomy ?? '-'}</span></div>
+                                <div style="margin-top: 15px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 10px;">
+                                    <div style="margin-bottom: 10px; font-size: 0.85rem;">
+                                        <span style="font-weight: 600; color: #ef4444;">💔 Luka Batin (Baggage):</span>
+                                        ${(u.baggage && u.baggage.length > 0) ? u.baggage.map(b => `<div style="margin-left: 10px; color: #fca5a5; font-size: 0.8rem;">- [${b.emotion}] Level ${b.intensity}/10 : "${b.reason}"</div>`).join('') : '<span style="color: #4ade80;">Tidak ada dendam</span>'}
+                                    </div>
+                                    <details style="cursor: pointer; font-size: 0.85rem; color: var(--text-muted);">
+                                        <summary style="font-weight: 600; color: #f472b6; outline: none; margin-bottom: 5px;">📜 Lihat System Prompt Terakhir</summary>
+                                        <pre style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; overflow-x: auto; white-space: pre-wrap; color: #e2e8f0; font-family: monospace; font-size: 0.75rem; margin-top: 5px; max-height: 250px; overflow-y: auto;">${u.last_system_prompt || 'Belum ada chat masuk dari user ini'}</pre>
+                                    </details>
                                 </div>
-                                <details style="cursor: pointer; font-size: 0.85rem; color: var(--text-muted);">
-                                    <summary style="font-weight: 600; color: #f472b6; outline: none; margin-bottom: 5px;">📜 Lihat System Prompt Terakhir</summary>
-                                    <pre style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; overflow-x: auto; white-space: pre-wrap; color: #e2e8f0; font-family: monospace; font-size: 0.75rem; margin-top: 5px; max-height: 250px; overflow-y: auto;">${u.last_system_prompt || 'Belum ada chat masuk dari user ini'}</pre>
-                                </details>
-                            </div>
-                        `;
-                        container.appendChild(card);
-                    });
+                            `;
+                            container.appendChild(card);
+                        });
+                    }
                 }
 
             } catch(e) {

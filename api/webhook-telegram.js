@@ -152,7 +152,7 @@ async function generateQwenImage(prompt, customRefImage = null) {
 }
 
 // --- MAIN PROCESSOR ---
-async function processMessage(body) {
+async function processMessage(body, host) {
     if (!body.message) return;
     
     let text = body.message.text || body.message.caption || "";
@@ -192,6 +192,16 @@ async function processMessage(body) {
     }
 
     await logEvent('INFO', 'Message Received', `Dari user ${userId}: "${text}"`, userId);
+
+    if (text.trim().toLowerCase() === '/setting') {
+        const protocol = host.includes('localhost') ? 'http' : 'https';
+        const dashboardUrl = `${protocol}://${host}/soul.html?user_id=${userId}`;
+        await sendTelegram('sendMessage', { 
+            chat_id: chatId, 
+            text: `Dasbor kontrol arsitektur Soul Anda dapat diakses secara privat di sini:\n\n${dashboardUrl}` 
+        });
+        return;
+    }
 
     // WAKE UP CALL: Tunda mode tidur & berikan konteks real-time ke Chronos (valid 30 menit)
     await redis.set('soul:chronos:force_awake', '1', { ex: 1800 });
@@ -412,7 +422,8 @@ async function handler(event) {
 
     await logEvent('INFO', 'Webhook Invoked', `Payload update_id: ${updateId}`);
 
-    await processMessage(body);
+    const host = event.headers?.host || process.env.VERCEL_URL || "localhost:3000";
+    await processMessage(body, host);
 
     return json(200, { ok: true });
 }
