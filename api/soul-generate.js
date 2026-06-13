@@ -52,13 +52,14 @@ async function handler(event) {
         const response = await queryChronosLLM(GENERATOR_PROMPT, body.prompt, true);
         
         let content = response.choices[0].message.content.trim();
-        // Bersihkan markdown block jika ada
-        if (content.startsWith('```json')) content = content.substring(7);
-        else if (content.startsWith('```')) content = content.substring(3);
-        if (content.endsWith('```')) content = content.substring(0, content.length - 3);
+        // Gunakan regex untuk mengekstrak hanya objek JSON dari response LLM (kebal preamble/teks pembuka)
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+            throw new Error("LLM gagal menghasilkan format JSON.");
+        }
 
         // Hapus komentar inline (//...) yang mungkin masih disisipkan LLM agar JSON.parse tidak gagal
-        let safeJson = content.replace(/\/\/[^\n]*\n/g, '\n').replace(/\/\/[^\n]*$/g, '');
+        let safeJson = jsonMatch[0].replace(/\/\/[^\n]*\n/g, '\n').replace(/\/\/[^\n]*$/g, '');
         const newSettings = JSON.parse(safeJson.trim());
         
         // Simpan langsung ke database (seolah user yang menekan tombol Simpan)
