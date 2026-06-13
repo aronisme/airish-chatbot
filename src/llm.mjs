@@ -136,7 +136,7 @@ export async function queryGroq(systemPrompt, userMessage = "", jsonMode = false
  * Rotasi model untuk mencegah rate limit dan down time.
  */
 export async function queryChronosLLM(systemPrompt, userMessage = "", jsonMode = false) {
-    const providers = ['groq_llama', 'qwen_turbo', 'groq_gemma'];
+    const providers = ['groq_llama', 'qwen_turbo', 'groq_llama_fast', 'mistral'];
     let startIndex = Math.floor(Math.random() * providers.length);
     let lastError = null;
 
@@ -147,10 +147,12 @@ export async function queryChronosLLM(systemPrompt, userMessage = "", jsonMode =
         try {
             if (provider === 'groq_llama') {
                 return await queryGroq(systemPrompt, userMessage, jsonMode, "llama-3.3-70b-versatile");
-            } else if (provider === 'groq_gemma') {
+            } else if (provider === 'groq_llama_fast') {
                 return await queryGroq(systemPrompt, userMessage, jsonMode, "llama-3.1-8b-instant");
             } else if (provider === 'qwen_turbo') {
                 return await queryQwen(systemPrompt, [], userMessage, null, jsonMode);
+            } else if (provider === 'mistral') {
+                return await queryMistral(systemPrompt, [], userMessage, null, jsonMode);
             }
         } catch (error) {
             console.warn(`[CHRONOS LLM] Provider ${provider} gagal: ${error.message}`);
