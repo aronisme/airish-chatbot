@@ -241,10 +241,21 @@
         <p class="subtitle">Kontrol Arsitektur Chronos & Simulasi Entitas</p>
 
         <div class="tabs">
+            <div class="tab" onclick="openTab('gen')">🪄 AI Creator</div>
             <div class="tab active" onclick="openTab('env')">🌍 Lingkungan</div>
             <div class="tab" onclick="openTab('psy')">🧠 Psikologis</div>
             <div class="tab" onclick="openTab('per')">🎭 Persona</div>
             <div class="tab" onclick="openTab('tel')">📡 Telemetri Live</div>
+        </div>
+
+        <!-- TAB AI CREATOR -->
+        <div id="gen" class="tab-content">
+            <div class="form-group">
+                <label style="color: var(--neon-accent); font-size: 1.1rem; font-weight: bold;">Jelaskan Karakter yang Diinginkan</label>
+                <textarea id="aiPrompt" rows="4" placeholder="Misal: Buat karakter cewek tsundere, penyayang tapi nakal, galak di awal tapi sebenarnya manja, anak gaul Jaksel..."></textarea>
+            </div>
+            <button class="btn-save" id="btn-generate" onclick="generatePersona()" style="background: linear-gradient(to right, #f43f5e, #e11d48);">✨ Generate & Terapkan Karakter ✨</button>
+            <p style="color:var(--text-muted); font-size: 0.85rem; margin-top: 15px;">* Proses ini memakan waktu beberapa detik. AI akan merumuskan seluruh variabel secara otomatis (Lingkungan, Psikologis, Big 5, dan Narasi) lalu menyimpannya.</p>
         </div>
 
         <!-- TAB LINGKUNGAN -->
@@ -598,6 +609,7 @@
                                         <summary style="font-weight: 600; color: #f472b6; outline: none; margin-bottom: 5px;">📜 Lihat System Prompt Terakhir</summary>
                                         <pre style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; overflow-x: auto; white-space: pre-wrap; color: #e2e8f0; font-family: monospace; font-size: 0.75rem; margin-top: 5px; max-height: 250px; overflow-y: auto;">${u.last_system_prompt || 'Belum ada chat masuk dari user ini'}</pre>
                                     </details>
+                                    <button onclick="resetUserSoul('${u.telegram_id}')" style="margin-top: 15px; width: 100%; background: #ef4444; color: white; border: none; padding: 8px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: bold;">☠️ Reset AI / Hapus Semua Memori User Ini</button>
                                 </div>
                             `;
                             container.appendChild(card);
@@ -607,6 +619,67 @@
 
             } catch(e) {
                 console.log("Error fetching telemetry:", e);
+            }
+        }
+
+        async function generatePersona() {
+            const promptStr = document.getElementById('aiPrompt').value;
+            if (!promptStr) {
+                showToast("Tuliskan deskripsi karakter terlebih dahulu!");
+                return;
+            }
+
+            const btn = document.getElementById('btn-generate');
+            const originalText = btn.innerText;
+            btn.innerText = "⏳ Sedang Merumuskan Jiwa...";
+            btn.style.opacity = "0.7";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/soul-generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: promptStr })
+                });
+                const responseData = await res.json();
+                
+                if (responseData.ok) {
+                    showToast("✨ Entitas baru berhasil dilahirkan!");
+                    // Refresh data formulir
+                    fetchSettings();
+                    // Alihkan tab ke persona untuk melihat hasilnya
+                    openTab('per');
+                } else {
+                    showToast("Gagal: " + responseData.error);
+                }
+            } catch(e) {
+                showToast("Terjadi kesalahan teknis.");
+            } finally {
+                btn.innerText = originalText;
+                btn.style.opacity = "1";
+                btn.disabled = false;
+            }
+        }
+
+        async function resetUserSoul(userId) {
+            const confirmed = confirm(`PERINGATAN KRITIS!\n\nAnda akan membunuh/mereset entitas Airish untuk pengguna ID: ${userId}.\nSemua memori panjang, dendam, dan profil psikologis akan dihanguskan tanpa sisa.\n\nLanjutkan?`);
+            if (!confirmed) return;
+
+            try {
+                const res = await fetch('/api/soul-reset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showToast("💀 Entitas berhasil dibunuh / di-reset!");
+                    fetchTelemetry();
+                } else {
+                    showToast("Gagal melakukan reset.");
+                }
+            } catch (e) {
+                showToast("Error saat reset.");
             }
         }
 
