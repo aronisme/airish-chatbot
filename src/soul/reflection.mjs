@@ -1,11 +1,7 @@
 // src/soul/reflection.mjs
 import { saveEpisodicMemory } from "../memory/episodic.mjs";
 
-function getRandomGroqKey() {
-    const groqKeys = (process.env.GROQ_KEYS || "").split(',').map(k => k.trim()).filter(Boolean);
-    if (groqKeys.length === 0) return "";
-    return groqKeys[Math.floor(Math.random() * groqKeys.length)];
-}
+import { queryChronosLLM } from "../llm.mjs";
 
 // --- DAFTAR KATA KUNCI PENANDA FAKTA AI (Safety Net) ---
 const AI_FACT_MARKERS = [
@@ -57,8 +53,7 @@ PENTING UNTUK TRUST EVALUATION:
  * Membaca percakapan terakhir dan menyimpannya sebagai memori jangka panjang (Semantic/Episodic).
  */
 export async function runReflectionEngine(supabase, userId, workingMemory) {
-    const apiKey = getRandomGroqKey();
-    if (!apiKey || workingMemory.length < 2) return;
+    if (workingMemory.length < 2) return;
     
     try {
         // Ambil memori lama agar AI tahu apa yang sudah tersimpan
@@ -103,30 +98,13 @@ ${existingFactsStr}
 
 ATURAN KRITIS: JANGAN memasukkan profil statis/kepribadian ke dalam new_facts. Masukkan itu semua ke dalam user_dossier. Hanya fakta remeh/kejadian spesifik yang masuk ke new_facts. JANGAN mengulang fakta yang sudah ada.`;
 
-        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${apiKey}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                model: "llama-3.3-70b-versatile", // Model stabil untuk akurasi ekstraksi memori
-                messages: [
-                    { role: "system", content: dynamicPrompt },
-                    { role: "user", content: conversationString }
-                ],
-                response_format: { type: "json_object" },
-                temperature: 0.1
-            })
-        });
-
-        if (!response.ok) {
-            console.error("Reflection API Error:", await response.text());
-            return;
-        }
-
-        const data = await response.json();
-        const content = JSON.parse(data.choices[0].message.content);
+        const response = await queryChronosLLM(dynamicPrompt, conversationString, true);
+        let contentStr = response.choices[0].message.content.trim();
+        if (contentStr.startsWith('```json')) contentStr = contentStr.substring(7);
+        else if (contentStr.startsWith('```')) contentStr = contentStr.substring(3);
+        if (contentStr.endsWith('```')) contentStr = contentStr.substring(0, contentStr.length - 3);
+        
+        const content = JSON.parse(contentStr.trim());
         
         // 1. Simpan fakta ke Semantic Memory (tabel lama)
         // Fix 4: Pre-validation — blokir fakta yang kemungkinan milik AI
