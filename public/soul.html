@@ -641,6 +641,12 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt: promptStr })
                 });
+                
+                if (!res.ok) {
+                    const textError = await res.text();
+                    throw new Error(`Server Error (${res.status}): ` + textError.substring(0, 50));
+                }
+                
                 const responseData = await res.json();
                 
                 if (responseData.ok) {
@@ -653,7 +659,8 @@
                     showToast("Gagal: " + responseData.error);
                 }
             } catch(e) {
-                showToast("Terjadi kesalahan teknis.");
+                console.error(e);
+                showToast("Error: " + e.message);
             } finally {
                 btn.innerText = originalText;
                 btn.style.opacity = "1";

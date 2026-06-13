@@ -2,6 +2,8 @@ import { json, vercelHandler, readJson } from "../src/http.mjs";
 import { queryChronosLLM } from "../src/llm.mjs";
 import { createClient } from "@supabase/supabase-js";
 
+export const maxDuration = 60; // Izinkan eksekusi hingga 60 detik untuk mencegah Vercel Timeout
+
 const supabaseUrl = process.env.SUPABASE_URL || "https://dummy.supabase.co";
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || "dummy_key";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
